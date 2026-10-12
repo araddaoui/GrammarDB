@@ -1,0 +1,215 @@
+{
+  "schemaVersion": "0.1.0",
+  "suiteName": "IdiomOptima conservative grammar seed regression suite",
+  "note": "Expected outcomes are requirements for a future engine; these tests do not imply a runnable parser exists.",
+  "cases": [
+    {
+      "id": "T-PUN-001",
+      "ruleId": "PUN-SPACE-001",
+      "input": "The result , however, was clear.",
+      "expected": "The result, however, was clear.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-PUN-002",
+      "ruleId": "PUN-SPACE-002",
+      "input": "This  is clear.",
+      "expected": "This is clear.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-PROTECT-001",
+      "ruleId": "PUN-SPACE-002",
+      "input": "const  x = 1;",
+      "expected": "const  x = 1;",
+      "mode": "code-protected",
+      "status": "guard"
+    },
+    {
+      "id": "T-AGR-001",
+      "ruleId": "AGR-SV-001",
+      "input": "The results shows a pattern.",
+      "expected": "The results show a pattern.",
+      "mode": "suggestion-or-auto-only-after-validation",
+      "status": "requires-parser"
+    },
+    {
+      "id": "T-AGR-002",
+      "ruleId": "AGR-SV-002",
+      "input": "The result show a pattern.",
+      "expected": "The result shows a pattern.",
+      "mode": "suggestion-or-auto-only-after-validation",
+      "status": "requires-parser"
+    },
+    {
+      "id": "T-AGR-003",
+      "ruleId": "AGR-SV-001",
+      "input": "The result shows a pattern.",
+      "expected": "The result shows a pattern.",
+      "mode": "all",
+      "status": "negative-control"
+    },
+    {
+      "id": "T-AGR-004",
+      "ruleId": "AGR-SV-001",
+      "input": "The results, which the researcher reports, shows a pattern.",
+      "expected": "Do not auto-correct without reliable clause and subject analysis.",
+      "mode": "all",
+      "status": "ambiguity-guard"
+    },
+    {
+      "id": "T-ART-001",
+      "ruleId": "ART-COUNT-001",
+      "input": "She bought book yesterday.",
+      "expected": "Suggest 'a book' or 'the book' only with discourse context.",
+      "mode": "all",
+      "status": "context-required"
+    },
+    {
+      "id": "T-ART-002",
+      "ruleId": "ART-COUNT-001",
+      "input": "Knowledge matters.",
+      "expected": "Knowledge matters.",
+      "mode": "all",
+      "status": "negative-control"
+    },
+    {
+      "id": "T-PREP-001",
+      "ruleId": "PREP-COMP-001",
+      "input": "It depends of the result.",
+      "expected": "Suggest 'on' only if intended sense is contingency.",
+      "mode": "all",
+      "status": "lexical-frame"
+    },
+    {
+      "id": "T-DIALECT-001",
+      "ruleId": "PUN-SPACE-001",
+      "input": "A valid regional or house-style variant.",
+      "expected": "No change unless selected style requires it.",
+      "mode": "all",
+      "status": "dialect-guard"
+    },
+    {
+      "id": "T-QUOTE-001",
+      "ruleId": "PUN-SPACE-001",
+      "input": "Quoted text is immutable in this mode.",
+      "expected": "No change inside protected quotation.",
+      "mode": "quote-protected",
+      "status": "guard"
+    },
+    {
+      "id": "T-LOOP-001",
+      "ruleId": "any",
+      "input": "A candidate that oscillates between two forms.",
+      "expected": "Stop after bounded passes and log conflict.",
+      "mode": "all",
+      "status": "loop-guard"
+    },
+    {
+      "id": "T-DUP-001",
+      "ruleId": "SPELL-DUP-001",
+      "input": "The researchers entered the the laboratory at sunrise.",
+      "expected": "The researchers entered the laboratory at sunrise.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-DUP-002-GUARD",
+      "ruleId": "SPELL-DUP-001",
+      "input": "The archivist realized he had had sufficient warning prior to the storm.",
+      "expected": "The archivist realized he had had sufficient warning prior to the storm.",
+      "mode": "ordinary-prose",
+      "status": "guard"
+    },
+    {
+      "id": "T-AGR-PRON-001",
+      "ruleId": "AGR-PRON-001",
+      "input": "The report is ready, although she have not finished yet.",
+      "expected": "The report is ready, although she has not finished yet.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-AGR-PRON-002-GUARD",
+      "ruleId": "AGR-PRON-001",
+      "input": "Could he have known about the storm prior to landfall?",
+      "expected": "Could he have known about the storm prior to landfall?",
+      "mode": "ordinary-prose",
+      "status": "guard"
+    },
+    {
+      "id": "T-PREP-TRANS-001",
+      "ruleId": "PREP-TRANS-001",
+      "input": "We will discuss about the treaty tomorrow.",
+      "expected": "We will discuss the treaty tomorrow.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-PROTECT-URL-CITATION-001",
+      "ruleId": "any",
+      "input": "For details, visit https://example.com/api/v1 or check [@smith2024:12].",
+      "expected": "For details, visit https://example.com/api/v1 or check [@smith2024:12].",
+      "mode": "ordinary-prose",
+      "status": "guard"
+    },
+    {
+      "id": "T-AGR-HEAD-001",
+      "ruleId": "AGR-HEAD-001",
+      "input": "The summary of all the submitted research articles, which was reviewed by two senior editors, have been rejected due to lack of evidence.",
+      "expected": "The summary of all the submitted research articles, which was reviewed by two senior editors, has been rejected due to lack of evidence.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-SYN-RESUMP-001",
+      "ruleId": "SYN-RESUMP-001",
+      "input": "The results were conclusive, which it is a significant finding for public health.",
+      "expected": "The results were conclusive, which is a significant finding for public health.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-AGR-DET-NUM-001",
+      "ruleId": "AGR-DET-NUM-001",
+      "input": "Participants who speak more than one languages show high cognitive reserve.",
+      "expected": "Participants who speak more than one language show high cognitive reserve.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-AGR-SV-LOCAL-001",
+      "ruleId": "AGR-SV-LOCAL-001",
+      "input": "The results shows that the hypothesis was validated.",
+      "expected": "The results show that the hypothesis was validated.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-AGR-REL-001",
+      "ruleId": "AGR-REL-001",
+      "input": "The researchers enrolled participants who speaks English fluently.",
+      "expected": "The researchers enrolled participants who speak English fluently.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-AGR-HEAD-EMBED-001",
+      "ruleId": "AGR-HEAD-EMBED-001",
+      "input": "Participants who speak more than one language suffers from less cognitive decline.",
+      "expected": "Participants who speak more than one language suffer from less cognitive decline.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    },
+    {
+      "id": "T-SCIENTIFIC-BENCHMARK-FULL",
+      "ruleId": "any",
+      "input": "The summary of all the submitted research articles, which was reviewed by two senior editors, have been rejected due to lack of evidence. Having analyzed the dataset, the results shows that participants who speaks more than one languages suffers from less cognitive decline in old age, which it is a significant finding for public health.",
+      "expected": "The summary of all the submitted research articles, which was reviewed by two senior editors, has been rejected due to lack of evidence. Having analyzed the dataset, the results show that participants who speak more than one language suffer from less cognitive decline in old age, which is a significant finding for public health.",
+      "mode": "ordinary-prose",
+      "status": "seed-mechanical"
+    }
+  ]
+}

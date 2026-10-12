@@ -1,0 +1,6 @@
+{
+  "name": "English Grammar Database",
+  "description": "Comprehensive English grammar reference, interactive syntax analyzer, 12-tense matrix, irregular verbs dictionary, and CEFR-graded practice quiz.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

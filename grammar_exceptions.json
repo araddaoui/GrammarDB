@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "0.1.0",
+  "purpose": "Shared guards and protected-span policies applied before correction candidates can be accepted.",
+  "protectedSpanKinds": [
+    "code",
+    "url",
+    "email",
+    "citation",
+    "reference",
+    "footnote",
+    "endnote",
+    "superscript",
+    "equation",
+    "quoted-immutable",
+    "user-locked",
+    "proper-name-locked"
+  ],
+  "globalGuards": [
+    {
+      "id": "EX-PROTECTED-001",
+      "condition": "candidate overlaps any protected span",
+      "action": "reject_candidate",
+      "reason": "Protected content must not be changed."
+    },
+    {
+      "id": "EX-SEMANTIC-001",
+      "condition": "candidate may alter negation, modality, tense, aspect, agency, quantifier, comparison, or scope",
+      "action": "escalate",
+      "reason": "Meaning-sensitive change requires contextual review."
+    },
+    {
+      "id": "EX-DIALECT-001",
+      "condition": "source and replacement differ only by accepted dialect/style variant",
+      "action": "reject_candidate",
+      "reason": "Do not normalize a legitimate variety unless requested."
+    },
+    {
+      "id": "EX-TECH-001",
+      "condition": "matched phrase appears in user glossary or domain terminology list",
+      "action": "reject_candidate",
+      "reason": "Respect technical and user-defined vocabulary."
+    },
+    {
+      "id": "EX-QUOTE-001",
+      "condition": "text is quoted and quote-preservation mode is enabled",
+      "action": "reject_candidate",
+      "reason": "Do not silently rewrite quoted language."
+    },
+    {
+      "id": "EX-FRAGMENT-001",
+      "condition": "text is a title, heading, bullet fragment, dialogue fragment, or deliberate creative fragment",
+      "action": "escalate",
+      "reason": "Sentence-level grammar assumptions may not apply."
+    },
+    {
+      "id": "EX-AMBIG-001",
+      "condition": "two or more corrections remain plausible",
+      "action": "escalate",
+      "reason": "Do not guess intended meaning."
+    },
+    {
+      "id": "EX-LOOP-001",
+      "condition": "same rule proposes the same edit twice or edits oscillate",
+      "action": "stop_sentence_and_log",
+      "reason": "Prevent correction loops."
+    }
+  ],
+  "dialectNotes": [
+    "Support configured English variety; do not assume US English.",
+    "Store accepted variants and their contexts rather than treating frequency as correctness.",
+    "Style-guide preferences are not grammar errors unless the user selects that style."
+  ],
+  "applicationNotes": [
+    "Check guards before scoring and again immediately before applying edits.",
+    "Guard outcomes should be logged without retaining raw text beyond product policy.",
+    "A rule-specific guard can narrow a global guard but must not override protected-span rejection."
+  ]
+}

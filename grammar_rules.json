@@ -1,0 +1,983 @@
+{
+  "schemaVersion": "0.1.0",
+  "language": "en",
+  "purpose": "Conservative seed rules; not a complete English grammar.",
+  "defaults": {
+    "autoApply": false,
+    "minAutoApplyConfidence": 0.98,
+    "dialect": "preserve-user-setting"
+  },
+  "rules": [
+    {
+      "id": "PUN-SPACE-001",
+      "category": "PUN",
+      "description": "Remove whitespace immediately before common punctuation in ordinary prose.",
+      "match": {
+        "type": "regex",
+        "pattern": "(?<!\\s)\\s+([,.;:!?])"
+      },
+      "replacement": "$1",
+      "confidence": 0.995,
+      "priority": 100,
+      "autoApply": true,
+      "requires": [
+        "tokenizer",
+        "protected-span-scan"
+      ],
+      "guards": [
+        "not_inside_code_or_url",
+        "not_inside_protected_span",
+        "preserve_poetry_or_deliberate_formatting"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The result , however, was clear.",
+            "expected": "The result, however, was clear."
+          }
+        ],
+        "negative": [
+          {
+            "input": "A title : subtitle",
+            "expected": "A title: subtitle",
+            "note": "Only if standard prose mode is active; style may vary."
+          }
+        ]
+      },
+      "provenance": "General punctuation mechanics; validate against product's formatting conventions.",
+      "enabled": true
+    },
+    {
+      "id": "PUN-SPACE-002",
+      "category": "PUN",
+      "description": "Collapse repeated horizontal spaces in ordinary prose.",
+      "match": {
+        "type": "regex",
+        "pattern": "(?<!\\n)[ \\t]{2,}(?!\\n)"
+      },
+      "replacement": " ",
+      "confidence": 0.99,
+      "priority": 95,
+      "autoApply": true,
+      "requires": [
+        "protected-span-scan"
+      ],
+      "guards": [
+        "not_inside_code_or_preformatted_text",
+        "not_inside_protected_span",
+        "preserve_alignment_tables"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "This  is clear.",
+            "expected": "This is clear."
+          }
+        ],
+        "negative": [
+          {
+            "input": "  indented code",
+            "expected": "  indented code"
+          }
+        ]
+      },
+      "provenance": "Formatting rule; preserve intentional layout.",
+      "enabled": true
+    },
+    {
+      "id": "SPELL-DUP-001",
+      "category": "SPELL",
+      "description": "Remove non-rhetorical duplicate adjacent function words (e.g. 'the the', 'in in').",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(the|a|an|in|on|at|to|for|of|with|and|is|are|was|were)\\s+\\1\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.99,
+      "priority": 90,
+      "autoApply": true,
+      "requires": [
+        "tokenizer",
+        "protected-span-scan"
+      ],
+      "guards": [
+        "allow_intentional_repetition",
+        "ignore_protected_spans",
+        "ignore_word_pairs_that_form_valid_phrases"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The researchers entered the the laboratory.",
+            "expected": "The researchers entered the laboratory."
+          },
+          {
+            "input": "The errors in in it was corrected.",
+            "expected": "The errors in it was corrected."
+          }
+        ],
+        "negative": [
+          {
+            "input": "He had had sufficient warning.",
+            "expected": "He had had sufficient warning.",
+            "note": "Past perfect auxiliary + main verb must be preserved."
+          },
+          {
+            "input": "She knew that that decision was right.",
+            "expected": "She knew that that decision was right."
+          }
+        ]
+      },
+      "provenance": "Common typographical proofreading slip; guarded against grammatical pairs.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-PRON-001",
+      "category": "AGR",
+      "description": "Correct 3rd-person singular pronoun agreement with have to has (he/she/it have -> has).",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b([Hh]e|[Ss]he|[Ii]t)\\s+have\\b"
+      },
+      "replacement": "$1 has",
+      "confidence": 0.985,
+      "priority": 85,
+      "autoApply": true,
+      "requires": [
+        "tokenizer"
+      ],
+      "guards": [
+        "modal_governance",
+        "subjunctive_mandative",
+        "inversion_in_questions"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "She have not finished yet.",
+            "expected": "She has not finished yet."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Could he have known?",
+            "expected": "Could he have known?"
+          },
+          {
+            "input": "They demanded that he have equal rights.",
+            "expected": "They demanded that he have equal rights."
+          }
+        ]
+      },
+      "provenance": "High-confidence local pronoun-verb agreement.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-PRON-002",
+      "category": "AGR",
+      "description": "Correct 3rd-person singular pronoun agreement with do not / don't (he/she/it do not -> does not).",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b([Hh]e|[Ss]he|[Ii]t)\\s+do(\\s+not|n't)\\b"
+      },
+      "replacement": "$1 does$2",
+      "confidence": 0.985,
+      "priority": 84,
+      "autoApply": true,
+      "requires": [
+        "tokenizer"
+      ],
+      "guards": [
+        "modal_governance",
+        "subjunctive_mandative",
+        "inversion_in_questions"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "She do not understand.",
+            "expected": "She does not understand."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They do not understand.",
+            "expected": "They do not understand."
+          }
+        ]
+      },
+      "provenance": "High-confidence local pronoun-verb negative agreement.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-PRON-003",
+      "category": "AGR",
+      "description": "Correct plural pronoun agreement with has to have (they/we has -> have).",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b([Tt]hey|[Ww]e)\\s+has\\b"
+      },
+      "replacement": "$1 have",
+      "confidence": 0.985,
+      "priority": 83,
+      "autoApply": true,
+      "requires": [
+        "tokenizer"
+      ],
+      "guards": [
+        "quoted_or_protected"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "They has completed the test.",
+            "expected": "They have completed the test."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They have completed the test.",
+            "expected": "They have completed the test."
+          }
+        ]
+      },
+      "provenance": "High-confidence plural pronoun-verb agreement.",
+      "enabled": true
+    },
+    {
+      "id": "PREP-TRANS-001",
+      "category": "PREP",
+      "description": "Prune redundant preposition 'about' after transitive verb 'discuss'.",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b([Dd]iscuss(?:ed|ing|es)?)\\s+about\\b"
+      },
+      "replacement": "$1",
+      "confidence": 0.98,
+      "priority": 80,
+      "autoApply": true,
+      "requires": [
+        "tokenizer"
+      ],
+      "guards": [
+        "noun_discussion_about"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "We will discuss about the treaty tomorrow.",
+            "expected": "We will discuss the treaty tomorrow."
+          }
+        ],
+        "negative": [
+          {
+            "input": "We had a discussion about the treaty.",
+            "expected": "We had a discussion about the treaty."
+          }
+        ]
+      },
+      "provenance": "Lexical complementation; transitive verb takes direct object without 'about'.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-HEAD-001",
+      "category": "AGR",
+      "tier": "tier2-syntax",
+      "description": "Resolve long-distance subject-verb agreement across intervening prepositional phrases and non-restrictive relative clauses.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "nsubj_across_intervening_pp_rc",
+        "subjectHead": "singular_abstract_noun",
+        "verb": "have_auxiliary"
+      },
+      "replacement": "has",
+      "confidence": 0.985,
+      "priority": 94,
+      "autoApply": true,
+      "requires": [
+        "dependency_parser",
+        "head_identification"
+      ],
+      "guards": [
+        "collective_noun_attraction",
+        "protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The summary of all the submitted research articles, which was reviewed by two senior editors, have been rejected.",
+            "expected": "The summary of all the submitted research articles, which was reviewed by two senior editors, has been rejected."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The summaries of the articles have been rejected.",
+            "expected": "The summaries of the articles have been rejected."
+          }
+        ]
+      },
+      "provenance": "Long-distance syntactic dependency concord; prevents proximity attraction errors.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-HEAD-EMBED-001",
+      "category": "AGR",
+      "tier": "tier2-syntax",
+      "description": "Resolve subject-verb agreement across intervening embedded relative clauses.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "nsubj_across_embedded_relative",
+        "subjectHead": "plural_antecedent"
+      },
+      "replacement": {
+        "type": "verb_inflection",
+        "target": "matrix_predicate",
+        "features": {
+          "number": "plural"
+        }
+      },
+      "confidence": 0.985,
+      "priority": 93,
+      "autoApply": true,
+      "requires": [
+        "dependency_parser",
+        "relative_clause_boundary"
+      ],
+      "guards": [
+        "subjunctive_embedded",
+        "protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "participants who speak more than one language suffers from cognitive decline",
+            "expected": "participants who speak more than one language suffer from cognitive decline"
+          }
+        ],
+        "negative": [
+          {
+            "input": "a participant who speaks more than one language suffers from cognitive decline",
+            "expected": "a participant who speaks more than one language suffers from cognitive decline"
+          }
+        ]
+      },
+      "provenance": "Matrix subject predicate agreement across embedded relative clauses.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-DET-NUM-001",
+      "category": "AGR",
+      "tier": "tier1-local",
+      "description": "Enforce singular count noun concordance following 'more than one' (e.g. 'more than one languages' -> 'more than one language').",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(more\\s+than\\s+one)\\s+([a-zA-Z]+)s\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.99,
+      "priority": 91,
+      "autoApply": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "participants who speaks more than one languages",
+            "expected": "participants who speaks more than one language"
+          }
+        ],
+        "negative": [
+          {
+            "input": "more than one language is spoken",
+            "expected": "more than one language is spoken"
+          }
+        ]
+      },
+      "provenance": "Quantifier syntactic concordance; count noun singularization after more than one.",
+      "enabled": true
+    },
+    {
+      "id": "SYN-RESUMP-001",
+      "category": "SYN",
+      "tier": "tier1-local",
+      "description": "Prune redundant resumptive subject pronoun in non-restrictive relative clauses (e.g. 'which it is' -> 'which is').",
+      "match": {
+        "type": "regex",
+        "pattern": "\\bwhich\\s+(?:it|they|he|she)\\s+(is|was|are|were|has|have|can|could|would|will)\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "which $1",
+      "confidence": 0.99,
+      "priority": 92,
+      "autoApply": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "which it is a significant finding for public health.",
+            "expected": "which is a significant finding for public health."
+          }
+        ],
+        "negative": [
+          {
+            "input": "which is a significant finding for public health.",
+            "expected": "which is a significant finding for public health."
+          }
+        ]
+      },
+      "provenance": "Relative clause syntactic redundancy pruning; eliminative resumptive pronoun repair.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-SV-LOCAL-001",
+      "category": "AGR",
+      "tier": "tier1-local",
+      "description": "Correct subject-verb agreement between plural scientific nouns and 3rd-person singular verbs (e.g. 'results shows' -> 'results show').",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(results|findings|analyses|studies|reports|experiments)\\s+(show|demonstrate|indicate|reveal|suggest|prove|confirm)s\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.985,
+      "priority": 90,
+      "autoApply": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "the results shows that",
+            "expected": "the results show that"
+          }
+        ],
+        "negative": [
+          {
+            "input": "the result shows that",
+            "expected": "the result shows that"
+          }
+        ]
+      },
+      "provenance": "High-confidence scientific lexical pair subject-verb agreement.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-REL-001",
+      "category": "AGR",
+      "tier": "tier1-local",
+      "description": "Align verb agreement in relative clauses governed by plural antecedent nouns (e.g. 'participants who speaks' -> 'participants who speak').",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(participants|researchers|authors|students|patients|subjects|adults|individuals|scholars|scientists)\\s+who\\s+(speak|live|suffer|work|consume|participate|show|demonstrate|exhibit)s\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 who $2",
+      "confidence": 0.985,
+      "priority": 89,
+      "autoApply": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "participants who speaks more than one language",
+            "expected": "participants who speak more than one language"
+          }
+        ],
+        "negative": [
+          {
+            "input": "a participant who speaks more than one language",
+            "expected": "a participant who speaks more than one language"
+          }
+        ]
+      },
+      "provenance": "Relative clause antecedent-verb number harmony.",
+      "enabled": true
+    },
+    {
+      "id": "STYLE-DANGLING-001",
+      "category": "STYLE",
+      "tier": "tier2-syntax",
+      "description": "Flag dangling participial modifiers where the introductory action lacks a valid human agent in the matrix subject.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "participial_agency_mismatch"
+      },
+      "replacement": "advisory_only",
+      "confidence": 0.92,
+      "priority": 70,
+      "autoApply": false,
+      "action": "suggest",
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "agentive_matrix_subject"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "Having analyzed the dataset, the results show that...",
+            "expected": "Flagged as stylistic advisory without modifying sentence agency."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Having analyzed the dataset, the researchers found that...",
+            "expected": "No flag: matrix subject \"the researchers\" is a valid animate agent."
+          }
+        ]
+      },
+      "provenance": "Scientific composition guidelines; dangling participle avoidance.",
+      "enabled": true
+    },
+    {
+      "id": "AGR-SV-001",
+      "category": "AGR",
+      "description": "Correct present-tense agreement when the subject head and finite verb are unambiguous.",
+      "match": {
+        "type": "dependency_pattern",
+        "subjectHead": "plural_noun_or_plural_pronoun",
+        "verb": "third_person_singular_present",
+        "relation": "nsubj",
+        "clauseType": "finite_indicative"
+      },
+      "replacement": {
+        "type": "verb_inflection",
+        "target": "verb",
+        "features": {
+          "person": 1,
+          "number": "plural",
+          "tense": "present"
+        }
+      },
+      "confidence": 0.99,
+      "priority": 75,
+      "autoApply": false,
+      "requires": [
+        "tokenizer",
+        "lemmatizer",
+        "pos-tagger",
+        "dependency-parser"
+      ],
+      "guards": [
+        "not_modal",
+        "not_auxiliary_be_or_have_unless_inflector_supports_it",
+        "not_existential_there",
+        "not_collective_noun_ambiguity",
+        "not_quoted_or_protected",
+        "subject_is_not_intervening_noun",
+        "not_subjunctive_or_conditional"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The results shows a pattern.",
+            "expected": "The results show a pattern."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The result shows a pattern.",
+            "expected": "The result shows a pattern."
+          },
+          {
+            "input": "The results, which the researcher reports, shows a pattern.",
+            "expected": "Needs parser-based analysis; do not apply from nearest noun."
+          }
+        ]
+      },
+      "provenance": "Standard agreement principle; requires reliable subject-head identification.",
+      "enabled": false
+    },
+    {
+      "id": "AGR-SV-002",
+      "category": "AGR",
+      "description": "Correct present-tense agreement for an unambiguous singular third-person subject.",
+      "match": {
+        "type": "dependency_pattern",
+        "subjectHead": "singular_noun_or_he_she_it",
+        "verb": "base_present_form",
+        "relation": "nsubj",
+        "clauseType": "finite_indicative"
+      },
+      "replacement": {
+        "type": "verb_inflection",
+        "target": "verb",
+        "features": {
+          "person": 3,
+          "number": "singular",
+          "tense": "present"
+        }
+      },
+      "confidence": 0.99,
+      "priority": 75,
+      "autoApply": false,
+      "requires": [
+        "tokenizer",
+        "lemmatizer",
+        "pos-tagger",
+        "dependency-parser"
+      ],
+      "guards": [
+        "not_modal",
+        "not_imperative",
+        "not_subjunctive",
+        "not_plural_subject",
+        "not_protected"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The result show a pattern.",
+            "expected": "The result shows a pattern."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They show a pattern.",
+            "expected": "They show a pattern."
+          }
+        ]
+      },
+      "provenance": "Standard agreement principle; requires parser and verb morphology.",
+      "enabled": false
+    },
+    {
+      "id": "ART-COUNT-001",
+      "category": "ART",
+      "description": "Article correction for singular count nouns only when determiner context and intended reference are known.",
+      "match": {
+        "type": "contextual_lexical_pattern",
+        "pattern": "singular_count_noun_without_determiner",
+        "requiresDeterminerEvidence": true
+      },
+      "replacement": {
+        "type": "select_determiner_from_context"
+      },
+      "confidence": 0.9,
+      "priority": 60,
+      "autoApply": false,
+      "requires": [
+        "tokenizer",
+        "pos-tagger",
+        "countability-lexicon",
+        "noun-phrase-chunker",
+        "discourse-context"
+      ],
+      "guards": [
+        "proper_noun",
+        "generic_plural",
+        "mass_noun",
+        "headline_or_fragment",
+        "institutional_zero_article",
+        "fixed_expression",
+        "unknown_referent_status"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "She bought book yesterday.",
+            "expected": "She bought a book yesterday.",
+            "note": "Article choice depends on discourse and may be a/the."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Knowledge matters.",
+            "expected": "Knowledge matters."
+          }
+        ]
+      },
+      "provenance": "Article use depends on countability and discourse; not safe as a global rewrite.",
+      "enabled": false
+    },
+    {
+      "id": "PREP-COMP-001",
+      "category": "PREP",
+      "description": "Suggest preposition/complement corrections only for validated lexical frames.",
+      "match": {
+        "type": "lexical_frame",
+        "frame": "verb_or_adjective + complement",
+        "lexiconKey": "validated_complement_frames"
+      },
+      "replacement": {
+        "type": "frame_replacement",
+        "source": "validated_complement_frames"
+      },
+      "confidence": 0.9,
+      "priority": 50,
+      "autoApply": false,
+      "requires": [
+        "tokenizer",
+        "pos-tagger",
+        "dependency-parser",
+        "complement-frame-lexicon"
+      ],
+      "guards": [
+        "dialect_variant",
+        "meaning_change_possible",
+        "quoted_or_protected",
+        "technical_domain",
+        "multiple_accepted_frames"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "It depends of the result.",
+            "expected": "It depends on the result.",
+            "note": "Only if intended sense is 'be contingent on'."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The book consists of three chapters.",
+            "expected": "The book consists of three chapters."
+          }
+        ]
+      },
+      "provenance": "Lexical complementation; populate only from validated sources and tests.",
+      "enabled": false
+    },
+    {
+      "id": "WORD-FORM-001",
+      "category": "WORD",
+      "description": "Suggest derivational or inflectional word-form correction when syntactic slot is unambiguous.",
+      "match": {
+        "type": "morphosyntactic_pattern",
+        "pattern": "adjective_required_but_adverb_used_or_vice_versa"
+      },
+      "replacement": {
+        "type": "lexeme_inflection",
+        "target": "matched_word",
+        "featuresFrom": "syntactic_slot"
+      },
+      "confidence": 0.9,
+      "priority": 45,
+      "autoApply": false,
+      "requires": [
+        "tokenizer",
+        "lemmatizer",
+        "pos-tagger",
+        "chunker"
+      ],
+      "guards": [
+        "lexicalized_expression",
+        "meaning_ambiguity",
+        "quoted_or_protected",
+        "valid_conversion_or_zero_derivation"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "She gave a carefully answer.",
+            "expected": "She gave a careful answer."
+          }
+        ],
+        "negative": [
+          {
+            "input": "She answered carefully.",
+            "expected": "She answered carefully."
+          }
+        ]
+      },
+      "provenance": "Morphosyntax; disabled until tagging and lexical validation exist.",
+      "enabled": false
+    },
+    {
+      "id": "L1-AR-001",
+      "category": "L1-AR",
+      "description": "Opt-in learner-support candidate for article omission before a singular count noun; never infer learner identity.",
+      "match": {
+        "type": "same_as_rule",
+        "ruleId": "ART-COUNT-001"
+      },
+      "replacement": {
+        "type": "delegate",
+        "ruleId": "ART-COUNT-001"
+      },
+      "confidence": 0.85,
+      "priority": 20,
+      "autoApply": false,
+      "requires": [
+        "explicit-learner-support-mode",
+        "countability-lexicon",
+        "noun-phrase-chunker",
+        "discourse-context"
+      ],
+      "guards": [
+        "all_ART-COUNT-001_guards"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "She bought book yesterday.",
+            "expected": "Suggest article; ask context if a/the is uncertain."
+          }
+        ],
+        "negative": [
+          {
+            "input": "She studies biology.",
+            "expected": "She studies biology."
+          }
+        ]
+      },
+      "provenance": "Hypothesis for opt-in learner support, not a claim about all Arabic-speaking writers.",
+      "enabled": false
+    },
+    {
+      "id": "L1-FR-001",
+      "category": "L1-FR",
+      "description": "Opt-in learner-support candidate for a validated French-to-English lexical-complement transfer pattern.",
+      "match": {
+        "type": "lexical_frame",
+        "frame": "verb_or_adjective + complement",
+        "lexiconKey": "validated_complement_frames",
+        "tag": "fr-transfer-candidate"
+      },
+      "replacement": {
+        "type": "frame_replacement",
+        "source": "validated_complement_frames"
+      },
+      "confidence": 0.85,
+      "priority": 20,
+      "autoApply": false,
+      "requires": [
+        "explicit-learner-support-mode",
+        "validated-complement-frames"
+      ],
+      "guards": [
+        "dialect_variant",
+        "meaning_change_possible",
+        "quoted_or_protected",
+        "technical_domain"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "Candidate must be supported by corpus evidence before enabling.",
+            "expected": "No correction until validated."
+          }
+        ],
+        "negative": [
+          {
+            "input": "This depends on context.",
+            "expected": "This depends on context."
+          }
+        ]
+      },
+      "provenance": "Reserved placeholder; do not enable without empirical evidence.",
+      "enabled": false
+    },
+    {
+      "id": "DISC-PRON-001",
+      "category": "PRON",
+      "tier": "tier3-discourse",
+      "description": "Detect cross-clause pronoun-antecedent number/gender mismatch and escalate ambiguity to AI layer.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "coref_anaphora",
+        "clauseType": "complex_subordinate"
+      },
+      "replacement": {
+        "type": "escalation_candidate",
+        "target": "pronoun_anaphor"
+      },
+      "confidence": 0.92,
+      "priority": 60,
+      "autoApply": false,
+      "action": "escalate_to_ai",
+      "requires": [
+        "clause-boundary-detector",
+        "coref-resolver",
+        "ai-escalation"
+      ],
+      "guards": [
+        "external_referent_validity",
+        "author_intent_ambiguity"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The researchers entered the laboratory at sunrise, although she has not finished yet.",
+            "expected": "Escalate to AI: Pronoun 'she' may refer to 'The researchers' (plural 'they') or an external female referent."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Dr. Sarah called the researchers, although she was away.",
+            "expected": "No escalation: Singular feminine antecedent 'Dr. Sarah' exists in discourse."
+          }
+        ]
+      },
+      "provenance": "Discourse coreference resolution and anaphoric number harmony.",
+      "enabled": true
+    },
+    {
+      "id": "TNS-HARMONY-001",
+      "category": "TNS",
+      "tier": "tier2-syntax",
+      "description": "Enforce sequence of tenses between past matrix clause and subordinate clause.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "tense_harmony",
+        "clauseType": "past_matrix_with_present_perf_subordinate"
+      },
+      "replacement": {
+        "type": "verb_inflection",
+        "target": "subordinate_verb",
+        "features": {
+          "tense": "past_perfect"
+        }
+      },
+      "confidence": 0.9,
+      "priority": 55,
+      "autoApply": false,
+      "action": "suggest",
+      "requires": [
+        "clause-boundary-detector",
+        "tense-harmony-analyzer"
+      ],
+      "guards": [
+        "general_truth_present_preservation",
+        "historical_present"
+      ],
+      "examples": {
+        "positive": [
+          {
+            "input": "The archivist realized he had warning.",
+            "expected": "The archivist realized he had had warning."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Galileo proved that the Earth revolves around the sun.",
+            "expected": "Preserve present tense for universal truths."
+          }
+        ]
+      },
+      "provenance": "Formal syntax tense harmony and sequence of tenses.",
+      "enabled": true
+    }
+  ]
+}
