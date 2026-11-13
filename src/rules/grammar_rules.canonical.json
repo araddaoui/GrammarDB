@@ -5673,6 +5673,2110 @@
       }
     },
     {
+      "id": "SYN-DANG-PERF-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Resolve dangling perfect participial modifier (\"Having [V3] [Object], [Non-Agentive Subject]...\") by inferring the passive temporal clause or contextual human agent.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_perfect_participle"
+      },
+      "replacement": "After [Object] was/were [V3] | After [Agent] [V_past] [Object]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Having analyzed the dataset, the results show that participants benefit.",
+            "expected": "After the dataset was analyzed, the results show that participants benefit."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Having analyzed the dataset, the researchers found that participants benefit.",
+            "expected": "Having analyzed the dataset, the researchers found that participants benefit."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-PERF-NEG-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Resolve negative dangling perfect participial modifier (\"Not having / Having not [V3] [Object], [Non-Agentive Subject]...\") to a causal finite clause.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_negative_perfect_participle"
+      },
+      "replacement": "Because [Object] had not been [V3]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Not having calibrated the sensors, the telemetry remained noisy.",
+            "expected": "Because the sensors had not been calibrated, the telemetry remained noisy."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Not having calibrated the sensors, the engineers postponed the test.",
+            "expected": "Not having calibrated the sensors, the engineers postponed the test."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-PERF-INTR-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 94,
+      "description": "Resolve intransitive dangling perfect participial modifier by inferring the implied agent from preceding context or domain semantics.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_intransitive_perfect_participle"
+      },
+      "replacement": "After [Inferred Agent] [V_past] ...",
+      "confidence": 0.975,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "discourse_agent_inference"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Discourse Agent Inference Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Having arrived at the laboratory, the experiment began immediately.",
+            "expected": "After the researchers arrived at the laboratory, the experiment began immediately."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Having arrived at the laboratory, the researchers began the experiment immediately.",
+            "expected": "Having arrived at the laboratory, the researchers began the experiment immediately."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-PREP-GER-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Resolve dangling prepositional gerund phrase (\"After/Upon/Before/By/Without [V-ing] [Object], [Non-Agentive Subject]...\") into a concordant finite clause.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_prepositional_gerund"
+      },
+      "replacement": "After/When/Before [Object] was/were [V3]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "After analyzing the dataset, the results show a significant pattern.",
+            "expected": "After the dataset was analyzed, the results show a significant pattern."
+          }
+        ],
+        "negative": [
+          {
+            "input": "After analyzing the dataset, the authors reported a significant pattern.",
+            "expected": "After analyzing the dataset, the authors reported a significant pattern."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-ELLIP-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Resolve dangling elliptical adverbial clause (\"While/When/Once/Although [V-ing] [Object], [Non-Agentive Subject]...\") into a concordant passive or agent-explicit clause.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_elliptical_adverbial"
+      },
+      "replacement": "While/When/Once [Object] was/were [being] [V3]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "While analyzing the samples, the instrument malfunctioned.",
+            "expected": "While the samples were being analyzed, the instrument malfunctioned."
+          }
+        ],
+        "negative": [
+          {
+            "input": "While analyzing the samples, the technician noticed a leak.",
+            "expected": "While analyzing the samples, the technician noticed a leak."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-PRES-PART-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 94,
+      "description": "Resolve dangling bare present participial modifier (\"[V-ing] [Object/PP], [Non-Agentive Subject]...\") into a concordant finite temporal clause.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_present_participle"
+      },
+      "replacement": "When [Object] was/were [V3] | As [Inferred Agent] [V_past] ...",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Examining the dataset, the results revealed a clear correlation.",
+            "expected": "When the dataset was examined, the results revealed a clear correlation."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Examining the dataset, the analyst discovered a clear correlation.",
+            "expected": "Examining the dataset, the analyst discovered a clear correlation."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-DANG-INF-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 93,
+      "description": "Resolve dangling purpose infinitive (\"To [V] [Object], [Non-Agentive Subject] [Active Verb]...\") by aligning the purpose clause passively.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "dangling_purpose_infinitive"
+      },
+      "replacement": "For [Object] to be [V3]",
+      "confidence": 0.975,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "ignore_protected_spans"
+      ],
+      "provenance": "Layer 2 Syntactic Agency & Dangling Modifier Resolution Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "To understand the trend, the chart shows quarterly growth.",
+            "expected": "For the trend to be understood, the chart shows quarterly growth."
+          }
+        ],
+        "negative": [
+          {
+            "input": "To understand the trend, researchers must inspect the quarterly chart.",
+            "expected": "To understand the trend, researchers must inspect the quarterly chart."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AGR-HEAD-PLURAL-001",
+      "category": "AGR",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Resolve long-distance plural subject-verb agreement across possessive determiners, intervening prepositional phrases, and non-restrictive relative clauses.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "plural_head_noun_aux_agreement"
+      },
+      "replacement": "were / are / have",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "dependency_parser"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Long-Distance Plural Head Agreement.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The committee's decisions regarding the budget was communicated late.",
+            "expected": "The committee's decisions regarding the budget were communicated late."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Each of the decisions regarding the budget was communicated late.",
+            "expected": "Each of the decisions regarding the budget was communicated late."
+          }
+        ]
+      }
+    },
+    {
+      "id": "TENSE-COORD-001",
+      "category": "TNS",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 94,
+      "description": "Enforce tense consistency across coordinated clauses sharing a past narrative frame (e.g., \"entered the room and announces\" -> \"entered the room and announced\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "coordinated_verb_tense_harmony"
+      },
+      "replacement": "[Past Tense Verb]",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "tense-harmony-analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Coordinated Clause Tense Harmonizer.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The CEO entered the room and announces the merger to everyone.",
+            "expected": "The CEO entered the room and announced the merger to everyone."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The CEO signed the contract yesterday and now leads the division.",
+            "expected": "The CEO signed the contract yesterday and now leads the division."
+          },
+          {
+            "input": "The committee reviewed the budgets and plans.",
+            "expected": "The committee reviewed the budgets and plans."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SUBJ-MAND-MODAL-001",
+      "category": "COND",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 96,
+      "description": "Remove redundant deontic modal auxiliaries (must/should/have to/need to) in mandative subjunctive \"that\"-clauses governed by directive verbs or necessity adjectives.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "mandative_subjunctive_redundant_modal"
+      },
+      "replacement": "[Mandative Governor] that [Subject] [Base Verb]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Mandative Subjunctive Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The board suggested that we must submit the report early.",
+            "expected": "The board suggested that we submit the report early."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The data suggest that policies must change immediately.",
+            "expected": "The data suggest that policies must change immediately."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SUBJ-MAND-VERB-001",
+      "category": "COND",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Convert third-person singular indicative verbs to the bare subjunctive base form in mandative \"that\"-clauses.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "mandative_subjunctive_base_verb"
+      },
+      "replacement": "[Mandative Governor] that [Subject] [Base Verb]",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "agency_tracking"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Mandative Subjunctive Engine.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The board suggested that he submits the report early.",
+            "expected": "The board suggested that he submit the report early."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The study suggests that exercise reduces cognitive decline.",
+            "expected": "The study suggests that exercise reduces cognitive decline."
+          }
+        ]
+      }
+    },
+    {
+      "id": "EMBED-QUESTION-REPORTED-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 96,
+      "description": "Restore canonical Subject-Verb declarative word order in reported speech and embedded wh-questions across full noun phrases and prepositional modifiers.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "embedded_wh_question_word_order"
+      },
+      "replacement": "[Reporting Verb] [wh-phrase] [Subject NP] [Copula/Verb]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Reported Speech & Embedded Clause Un-inversion.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The intern asked what was the deadline for the proposal.",
+            "expected": "The intern asked what the deadline for the proposal was."
+          },
+          {
+            "input": "The manager asked why did the team delay the launch.",
+            "expected": "The manager asked why the team delayed the launch."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The intern asked who was responsible.",
+            "expected": "The intern asked who was responsible."
+          },
+          {
+            "input": "The intern asked, \"What was the deadline?\"",
+            "expected": "The intern asked, \"What was the deadline?\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "REL-HUMAN-WHO-001",
+      "category": "PRON",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Replace non-human relative pronoun \"which\" with \"who\" when governed by an individual human antecedent (preserving collective institutions, prepositional \"which\", and sentential clauses).",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "human_antecedent_relative_pronoun"
+      },
+      "replacement": "who",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "IdiomOptima Layer 2 Animacy & Relative Pronoun Agreement.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The employees, which signed the petition, received no reply.",
+            "expected": "The employees, who signed the petition, received no reply."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The committee, which met yesterday, approved the budget.",
+            "expected": "The committee, which met yesterday, approved the budget."
+          },
+          {
+            "input": "The CEO announced the merger to the employees, which surprised everyone.",
+            "expected": "The CEO announced the merger to the employees, which surprised everyone."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-EMPHASISE-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Prune redundant preposition \"on\" after direct transitive verb \"emphasise/emphasize\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(emphasise|emphasize|emphasises|emphasizes|emphasised|emphasized|emphasising|emphasizing)\\s+on\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Direct transitive verb \"emphasise/emphasize\" takes no preposition.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The director emphasised on the need for change.",
+            "expected": "The director emphasised the need for change."
+          },
+          {
+            "input": "The speaker emphasized on clarity.",
+            "expected": "The speaker emphasized clarity."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The director placed emphasis on the need for change.",
+            "expected": "The director placed emphasis on the need for change."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-STRESS-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune redundant preposition \"on\" after verb \"stress\" while preserving nominal \"place/put stress on\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Transitive verb \"stress\" governs direct object without \"on\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The report stressed on the urgency.",
+            "expected": "The report stressed the urgency."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The report placed heavy stress on the urgency.",
+            "expected": "The report placed heavy stress on the urgency."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-MENTION-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune redundant preposition \"about\" after direct transitive verb \"mention\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Transitive verb \"mention\" takes a direct nominal or clausal object.",
+      "examples": {
+        "positive": [
+          {
+            "input": "She mentioned about the budget.",
+            "expected": "She mentioned the budget."
+          }
+        ],
+        "negative": [
+          {
+            "input": "There was no mention about the budget.",
+            "expected": "There was no mention about the budget."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-AWAIT-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Prune redundant preposition \"for\" after direct transitive verb \"await\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(await|awaits|awaited|awaiting)\\s+for\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "\"Await\" is strictly transitive without \"for\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "We are awaiting for your response.",
+            "expected": "We are awaiting your response."
+          }
+        ],
+        "negative": [
+          {
+            "input": "We are waiting for your response.",
+            "expected": "We are waiting for your response."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-INVESTIGATE-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Prune redundant preposition \"into\" after direct transitive verb \"investigate\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(investigate|investigates|investigated|investigating)\\s+into\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Verb \"investigate\" takes direct object; noun \"investigation\" takes \"into\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The committee will investigate into the delay.",
+            "expected": "The committee will investigate the delay."
+          }
+        ],
+        "negative": [
+          {
+            "input": "An investigation into the delay began.",
+            "expected": "An investigation into the delay began."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-REQUEST-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune redundant preposition \"for\" after finite transitive verb \"request\" (preserving noun \"a request for\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Verb \"request\" takes a direct object without \"for\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The team requested for additional funding.",
+            "expected": "The team requested additional funding."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The team submitted a request for additional funding.",
+            "expected": "The team submitted a request for additional funding."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-REGRET-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune redundant preposition \"about\" after verb \"regret\" (preserving noun \"regret about\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Transitive verb \"regret\" takes direct object.",
+      "examples": {
+        "positive": [
+          {
+            "input": "They regretted about the oversight.",
+            "expected": "They regretted the oversight."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They expressed deep regret about the oversight.",
+            "expected": "They expressed deep regret about the oversight."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-COMPRISE-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 91,
+      "description": "Prune erroneous preposition \"of\" after active verb \"comprise\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(comprise|comprises|comprising)\\s+of\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "The whole comprises the parts (no \"of\").",
+      "examples": {
+        "positive": [
+          {
+            "input": "The system comprises of three phases.",
+            "expected": "The system comprises three phases."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The system comprises three phases.",
+            "expected": "The system comprises three phases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-ENTER-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune spurious \"into\" after \"enter\" before physical places or markets (preserving idioms like \"enter into an agreement\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Spatial \"enter\" is directly transitive without \"into\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The CEO entered into the boardroom.",
+            "expected": "The CEO entered the boardroom."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The firms entered into an agreement.",
+            "expected": "The firms entered into an agreement."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-CONTACT-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune spurious \"with\" after transitive verb \"contact\" (preserving noun phrases like \"in contact with\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Verb \"contact\" takes a direct object without \"with\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "Please contact with the director today.",
+            "expected": "Please contact the director today."
+          }
+        ],
+        "negative": [
+          {
+            "input": "She stayed in contact with the director.",
+            "expected": "She stayed in contact with the director."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-TRANS-REACH-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 89,
+      "description": "Prune spurious \"at\" after transitive verb \"reach\" before destinations/conclusions (preserving \"at least/most/random\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "transitive_verb_spurious_prep"
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "\"Reach\" takes direct destination/milestone object.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The team reached at the office early.",
+            "expected": "The team reached the office early."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Scores can reach at least ninety percent.",
+            "expected": "Scores can reach at least ninety percent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-COPE-UP-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 91,
+      "description": "Correct non-standard phrasal verb \"cope up with\" to \"cope with\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(cope|copes|coped|coping)\\s+up\\s+with\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 with",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Standard English idiomatic verb is \"cope with\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The staff struggled to cope up with the workload.",
+            "expected": "The staff struggled to cope with the workload."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The staff struggled to cope with the workload.",
+            "expected": "The staff struggled to cope with the workload."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-RETURN-BACK-001",
+      "category": "PREP",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 89,
+      "description": "Prune pleonastic \"back\" after verb \"return\".",
+      "match": {
+        "type": "regex",
+        "pattern": "(?<!\\bin\\s+)\\b(return|returns|returned|returning)\\s+back\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Verb \"return\" already encodes backward motion.",
+      "examples": {
+        "positive": [
+          {
+            "input": "They returned back to the office.",
+            "expected": "They returned to the office."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They returned to the office.",
+            "expected": "They returned to the office."
+          }
+        ]
+      }
+    },
+    {
+      "id": "USAGE-COMPRISE-001",
+      "category": "USAGE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 92,
+      "description": "Correct passive usage solecism \"be comprised of\" to standard \"be composed of\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(is|are|was|were|be|being|been)\\s+comprised\\s+of\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 composed of",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Whole composes parts / is composed of parts (\"comprise\" is active, not \"comprised of\").",
+      "examples": {
+        "positive": [
+          {
+            "input": "The system was comprised of three phases.",
+            "expected": "The system was composed of three phases."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The system was composed of three phases.",
+            "expected": "The system was composed of three phases."
+          }
+        ]
+      }
+    },
+    {
+      "id": "USAGE-IRREGARDLESS-001",
+      "category": "USAGE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 93,
+      "description": "Correct non-standard double-negative adverb \"irregardless\" to \"regardless\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\birregardless\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "regardless",
+      "confidence": 0.995,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Standard formal English lexical usage.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Irregardless of cost, we must proceed.",
+            "expected": "Regardless of cost, we must proceed."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Regardless of cost, we must proceed.",
+            "expected": "Regardless of cost, we must proceed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "USAGE-SUPPOSED-TO-001",
+      "category": "USAGE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 92,
+      "description": "Correct missing participial \"-d\" in semi-modal \"be suppose to\" -> \"be supposed to\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(is|are|was|were|am)\\s+suppose\\s+to\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 supposed to",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Deontic passive construction requires participial \"supposed\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The proposal was suppose to pass.",
+            "expected": "The proposal was supposed to pass."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The proposal was supposed to pass.",
+            "expected": "The proposal was supposed to pass."
+          }
+        ]
+      }
+    },
+    {
+      "id": "COLLOC-RESEARCH-MAKE-001",
+      "category": "COLLOC",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 92,
+      "description": "Correct non-idiomatic \"make a research\" to standard collocation \"conduct research\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "light_verb_uncountable_collocation"
+      },
+      "replacement": "conduct research",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "\"Research\" is uncountable and collocates with \"conduct\" or \"do\", not \"make a\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "The staff made a research on competitors.",
+            "expected": "The staff conducted research on competitors."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The staff conducted research on competitors.",
+            "expected": "The staff conducted research on competitors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "COLLOC-RESEARCH-ART-001",
+      "category": "COLLOC",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 91,
+      "description": "Remove erroneous indefinite article before uncountable \"research\" after research verbs.",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(do|does|did|doing|conduct|conducts|conducted|conducting|undertake|undertakes|undertaken|undertaking|perform|performs|performed|performing|carry\\s+out|carries\\s+out|carried\\s+out|carrying\\s+out)\\s+(?:a|an)\\s+research\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "$1 research",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Uncountable mass noun \"research\" takes zero indefinite article.",
+      "examples": {
+        "positive": [
+          {
+            "input": "They conducted a research on climate.",
+            "expected": "They conducted research on climate."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They conducted a research study on climate.",
+            "expected": "They conducted a research study on climate."
+          }
+        ]
+      }
+    },
+    {
+      "id": "COLLOC-LIGHTVERB-DO-MAKE-001",
+      "category": "COLLOC",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 91,
+      "description": "Correct non-idiomatic \"do/did + decision/mistake/effort/progress\" light-verb collocations to \"make/made\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "light_verb_do_make_collocation"
+      },
+      "replacement": "made a decision / made progress",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Standard English light-verb collocation selection.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The committee did a decision yesterday.",
+            "expected": "The committee made a decision yesterday."
+          },
+          {
+            "input": "The team made a progress today.",
+            "expected": "The team made progress today."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The committee made a decision yesterday.",
+            "expected": "The committee made a decision yesterday."
+          }
+        ]
+      }
+    },
+    {
+      "id": "COLLOC-UNCOUNT-ART-001",
+      "category": "COLLOC",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 91,
+      "description": "Remove erroneous indefinite article before uncountable mass nouns (advice, feedback, information, evidence, equipment, software).",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "uncountable_noun_indefinite_article"
+      },
+      "replacement": "$1 $2",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Uncountable mass nouns do not take singular indefinite articles unless heading a countable noun.",
+      "examples": {
+        "positive": [
+          {
+            "input": "She gave an advice to the team.",
+            "expected": "She gave advice to the team."
+          }
+        ],
+        "negative": [
+          {
+            "input": "She gave a feedback session to the team.",
+            "expected": "She gave a feedback session to the team."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-EXPLETIVE-PASSIVE-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Convert bureaucratic expletive passive (\"it was decided by X that\") to direct active voice (\"X decided that\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "expletive_passive_agent_that"
+      },
+      "replacement": "[Agent] [Verb] that",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Active-voice agency restoration from dummy-it passive clauses.",
+      "examples": {
+        "positive": [
+          {
+            "input": "And it was decided by the steering committee that the proposal was acceptable.",
+            "expected": "And the steering committee decided that the proposal was acceptable."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The steering committee decided that the proposal was acceptable.",
+            "expected": "The steering committee decided that the proposal was acceptable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-PASSIVE-TOBE-BY-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 94,
+      "description": "Convert convoluted passive infinitive (\"X was to be reviewed by Y\") to direct active voice (\"Y would review X\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "passive_to_be_agent_by"
+      },
+      "replacement": "[Agent] would [Verb] [Patient]",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Direct active voice simplification for prospective agentive passives.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The proposal was to be reviewed by the director.",
+            "expected": "The director would review the proposal."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The director would review the proposal.",
+            "expected": "The director would review the proposal."
+          }
+        ]
+      }
+    },
+    {
+      "id": "SYN-STACCATO-MERGE-001",
+      "category": "SYN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 93,
+      "description": "Combine 3+ consecutive choppy sentences sharing an identical \"[Subject] [Copula] [Adjective]\" pattern into one parallel series.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "staccato_copula_sentence_merge"
+      },
+      "replacement": "[Subject] [Copula] [Adj1], [Adj2], and [Adj3].",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer",
+        "segmenter"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Syntactic sentence combining for repetitive staccato predications.",
+      "examples": {
+        "positive": [
+          {
+            "input": "It is essential. It is urgent. It is unavoidable.",
+            "expected": "It is essential, urgent, and unavoidable."
+          }
+        ],
+        "negative": [
+          {
+            "input": "It is essential. However, it takes time.",
+            "expected": "It is essential. However, it takes time."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-EXPLETIVE-NOTE-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 92,
+      "description": "Remove throat-clearing expletive hedges (\"It is important to note that\", \"It should be noted that\", \"It goes without saying that\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "expletive_hedging_opener"
+      },
+      "replacement": "[Direct Clause]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Eliminate redundant dummy-it metadiscourse openers.",
+      "examples": {
+        "positive": [
+          {
+            "input": "It is important to note that the system was stable.",
+            "expected": "The system was stable."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Why is it important to note that the system was stable?",
+            "expected": "Why is it important to note that the system was stable?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-IN-ORDER-TO-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 88,
+      "description": "Tighten wordy infinitive phrase \"in order to [verb]\" to \"to [verb]\" (preserving \"in order not to\" and literal ordering).",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "wordy_in_order_to"
+      },
+      "replacement": "to $1",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Concise infinitive of purpose.",
+      "examples": {
+        "positive": [
+          {
+            "input": "He reviewed the timeline in order to complete the work.",
+            "expected": "He reviewed the timeline to complete the work."
+          }
+        ],
+        "negative": [
+          {
+            "input": "He left early in order not to miss the train.",
+            "expected": "He left early in order not to miss the train."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-REGARDING-001",
+      "category": "CONCISE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Replace wordy prepositional phrases \"with regard(s) to\", \"in regard(s) to\", and \"with respect to\" with \"regarding\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(?:(?:with|in)\\s+regards?\\s+to|with\\s+respect\\s+to)\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "regarding",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Concise prepositional phrasing.",
+      "examples": {
+        "positive": [
+          {
+            "input": "With regard to the budget, we agreed.",
+            "expected": "Regarding the budget, we agreed."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Regarding the budget, we agreed.",
+            "expected": "Regarding the budget, we agreed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-IN-THE-EVENT-001",
+      "category": "CONCISE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Replace wordy conditional conjunction \"in the event that\" with \"if\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\bin\\s+the\\s+event\\s+that\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "if",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Concise conditional subordinator.",
+      "examples": {
+        "positive": [
+          {
+            "input": "In the event that the deadline moves, tell us.",
+            "expected": "If the deadline moves, tell us."
+          }
+        ],
+        "negative": [
+          {
+            "input": "If the deadline moves, tell us.",
+            "expected": "If the deadline moves, tell us."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-ABILITY-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 90,
+      "description": "Replace circumlocution \"has/have/had the ability to [verb]\" with modal \"can/could [verb]\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "wordy_has_ability_to"
+      },
+      "replacement": "can / could",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Concise modal expression of capability.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The team has the ability to adapt.",
+            "expected": "The team can adapt."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They need to develop the ability to adapt.",
+            "expected": "They need to develop the ability to adapt."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-BECAUSE-001",
+      "category": "CONCISE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 91,
+      "description": "Replace wordy causal phrases \"due to the fact that\", \"owing to the fact that\", \"on account of the fact that\", \"in light of the fact that\" with \"because\".",
+      "match": {
+        "type": "regex",
+        "pattern": "\\b(?:due\\s+to|owing\\s+to|on\\s+account\\s+of|because\\s+of|in\\s+light\\s+of)\\s+the\\s+fact\\s+that\\b",
+        "caseInsensitive": true
+      },
+      "replacement": "because",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Eliminate bureaucratic \"the fact that\" circumlocution.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Due to the fact that the tools are new, test them.",
+            "expected": "Because the tools are new, test them."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Because the tools are new, test them.",
+            "expected": "Because the tools are new, test them."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-NEEDLESS-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 92,
+      "description": "Remove pleonastic filler \"needless to say\" cleanly along with surrounding parenthetical punctuation.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "pleonastic_needless_to_say"
+      },
+      "replacement": "",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Pleonastic metadiscourse deletion.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Because the tools are new, needless to say, they require testing.",
+            "expected": "Because the tools are new, they require testing."
+          },
+          {
+            "input": "Needless to say, the tools require testing.",
+            "expected": "The tools require testing."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The tools require testing.",
+            "expected": "The tools require testing."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-PLETHORA-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 90,
+      "description": "Replace overblown quantifier cliché \"a plethora of\" with concise \"numerous\" (count nouns) or \"ample\" (mass nouns).",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "cliche_plethora_of"
+      },
+      "replacement": "numerous / ample",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Direct plain-language quantifier.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The committee allocated a plethora of resources.",
+            "expected": "The committee allocated numerous resources."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The committee allocated numerous resources.",
+            "expected": "The committee allocated numerous resources."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-ULTIMATELY-001",
+      "category": "CONCISE",
+      "tier": "tier1-local",
+      "status": "stable",
+      "riskLevel": "medium",
+      "priority": 90,
+      "description": "Replace cliché discourse filler \"at the end of the day,\" with \"ultimately,\" (preserving literal time-of-day references).",
+      "match": {
+        "type": "regex",
+        "pattern": "\\bat\\s+the\\s+end\\s+of\\s+the\\s+day(?=,)",
+        "caseInsensitive": true
+      },
+      "replacement": "ultimately",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "local_regex"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Cliché idiom replacement with precise adverb.",
+      "examples": {
+        "positive": [
+          {
+            "input": "At the end of the day, the results speak for themselves.",
+            "expected": "Ultimately, the results speak for themselves."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The technicians locked the lab at the end of the day.",
+            "expected": "The technicians locked the lab at the end of the day."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-CLICHE-DELVE-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 90,
+      "description": "Replace overused AI cliché \"delve into\" with clear direct verb \"examine\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "cliche_delve_into"
+      },
+      "replacement": "examine",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "AI boilerplate elimination.",
+      "examples": {
+        "positive": [
+          {
+            "input": "This framework allows the team to delve into the complexities.",
+            "expected": "This framework allows the team to examine the complexities."
+          }
+        ],
+        "negative": [
+          {
+            "input": "This framework allows the team to examine the complexities.",
+            "expected": "This framework allows the team to examine the complexities."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-CLICHE-PIVOTAL-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 90,
+      "description": "Tighten cliché \"play a pivotal/crucial/vital/key role in [gerund]\" to direct \"help [base verb]\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "cliche_pivotal_role_in"
+      },
+      "replacement": "help(s) [verb]",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Verbose AI boilerplate tightening.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The platform plays a pivotal role in shaping digital finance.",
+            "expected": "The platform helps shape digital finance."
+          }
+        ],
+        "negative": [
+          {
+            "input": "She plays a supporting role in the committee.",
+            "expected": "She plays a supporting role in the committee."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-PLEONASM-TIME-001",
+      "category": "CONCISE",
+      "tier": "tier1-local",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 88,
+      "description": "Replace bureaucratic pleonasms (\"at this point in time\", \"until such time as\", \"each and every\", \"for all intents and purposes\", \"in close proximity to\").",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "wordy_pleonastic_phrases"
+      },
+      "replacement": "now / until / each / essentially / near",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Plain-English conciseness.",
+      "examples": {
+        "positive": [
+          {
+            "input": "At this point in time, each and every step is clear.",
+            "expected": "Now, each step is clear."
+          }
+        ],
+        "negative": [
+          {
+            "input": "Now, each step is clear.",
+            "expected": "Now, each step is clear."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PUN-OXFORD-001",
+      "category": "PUN",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 87,
+      "description": "Insert missing Oxford/serial comma before \"and/or\" in 3+ item parallel noun/adjective series (avoiding appositives and clause commas).",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "serial_oxford_comma"
+      },
+      "replacement": ", $1",
+      "confidence": 0.98,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Consistent serial comma clarity in formal and academic prose.",
+      "examples": {
+        "positive": [
+          {
+            "input": "The team reviewed the budget, the schedule and the staffing plan.",
+            "expected": "The team reviewed the budget, the schedule, and the staffing plan."
+          },
+          {
+            "input": "The report covered several topics, including deadlines, budgets and staffing.",
+            "expected": "The report covered several topics, including deadlines, budgets, and staffing."
+          }
+        ],
+        "negative": [
+          {
+            "input": "After entering the room, she opened the report and signed it.",
+            "expected": "After entering the room, she opened the report and signed it."
+          },
+          {
+            "input": "Dr. Smith, the director and the lead engineer, arrived.",
+            "expected": "Dr. Smith, the director and the lead engineer, arrived."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PRON-OBJ-CASE-001",
+      "category": "PRON",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Correct subject pronouns (I/he/she/we/they) to object case (me/him/her/us/them) when governed by a transitive verb or preposition.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "object_pronoun_case"
+      },
+      "replacement": "me / him / her / us / them",
+      "confidence": 0.99,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Objective case required for direct verbal and prepositional complements.",
+      "examples": {
+        "positive": [
+          {
+            "input": "I invite you to join I in exploring the topic.",
+            "expected": "I invite you to join me in exploring the topic."
+          },
+          {
+            "input": "Please send the draft to he and she.",
+            "expected": "Please send the draft to him and her."
+          }
+        ],
+        "negative": [
+          {
+            "input": "They told us he arrived early.",
+            "expected": "They told us he arrived early."
+          },
+          {
+            "input": "I know I should verify the figures.",
+            "expected": "I know I should verify the figures."
+          }
+        ]
+      }
+    },
+    {
+      "id": "PREP-GERUND-001",
+      "category": "PREP",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 94,
+      "description": "Convert bare infinitive verb forms following prepositions (e.g., \"in explore\", \"by compare\", \"without examine\") to gerund \"-ing\" complements.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "preposition_gerund_complement"
+      },
+      "replacement": "[Preposition] [Verb-ing]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Prepositions govern nominalized gerund (-ing) verb complements.",
+      "examples": {
+        "positive": [
+          {
+            "input": "Thank you for joining me in explore the effects.",
+            "expected": "Thank you for joining me in exploring the effects."
+          },
+          {
+            "input": "They improved accuracy by compare the models.",
+            "expected": "They improved accuracy by comparing the models."
+          }
+        ],
+        "negative": [
+          {
+            "input": "We left early in order to arrive on time.",
+            "expected": "We left early in order to arrive on time."
+          },
+          {
+            "input": "They worked in support of the policy.",
+            "expected": "They worked in support of the policy."
+          }
+        ]
+      }
+    },
+    {
+      "id": "AUX-BE-PROG-001",
+      "category": "MODAL",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 95,
+      "description": "Convert bare base verbs following progressive auxiliary \"am/is/are/was/were\" (e.g., \"I am compare\") to present participle \"-ing\" forms.",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "progressive_be_participle"
+      },
+      "replacement": "[am/is/are/was/were] [Verb-ing]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "Progressive aspect auxiliary \"be\" requires present participle \"-ing\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "To drive this point home, I am compare the effects.",
+            "expected": "To drive this point home, I am comparing the effects."
+          },
+          {
+            "input": "She is analyze the dataset now.",
+            "expected": "She is analyzing the dataset now."
+          }
+        ],
+        "negative": [
+          {
+            "input": "What we need to do is compare the effects.",
+            "expected": "What we need to do is compare the effects."
+          },
+          {
+            "input": "The result is clear and ready.",
+            "expected": "The result is clear and ready."
+          }
+        ]
+      }
+    },
+    {
+      "id": "CONCISE-ETC-PLEONASM-001",
+      "category": "CONCISE",
+      "tier": "tier2-syntax",
+      "status": "experimental",
+      "riskLevel": "high",
+      "priority": 91,
+      "description": "Remove redundant \", etc.\" after non-exhaustive introducers (\"such as\", \"including\", \"for example\", \"e.g.\") or closing \", and [Item]\".",
+      "match": {
+        "type": "dependency_pattern",
+        "relation": "redundant_etc_in_nonexhaustive_list"
+      },
+      "replacement": "[List without etc.]",
+      "confidence": 0.985,
+      "autoApply": true,
+      "enabled": true,
+      "requires": [
+        "clause_analyzer"
+      ],
+      "guards": [
+        "not_inside_protected_span"
+      ],
+      "provenance": "\"Such as\" / \"including\" / \"and [last item]\" already mark list scope without \"etc.\".",
+      "examples": {
+        "positive": [
+          {
+            "input": "LLMs such as GPT 4o, Copilot, and Claude, etc. affect writing.",
+            "expected": "LLMs such as GPT 4o, Copilot, and Claude affect writing."
+          },
+          {
+            "input": "Examples include tools such as A, B, and C, etc.",
+            "expected": "Examples include tools such as A, B, and C."
+          }
+        ],
+        "negative": [
+          {
+            "input": "The kit includes cables, adapters, batteries, etc.",
+            "expected": "The kit includes cables, adapters, batteries, etc."
+          }
+        ]
+      }
+    },
+    {
       "id": "AGR-SV-PLURAL-IS-001",
       "category": "AGR",
       "tier": "tier1-local",

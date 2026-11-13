@@ -5243,6 +5243,556 @@
         "riskLevel": "low"
       },
       {
+        "id": "PREP-TRANS-EMPHASISE-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Prune redundant preposition \"on\" after direct transitive verb \"emphasise/emphasize\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(emphasise|emphasize|emphasises|emphasizes|emphasised|emphasized|emphasising|emphasizing)\\s+on\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The director emphasised on the need for change.",
+              "expected": "The director emphasised the need for change."
+            },
+            {
+              "input": "The speaker emphasized on clarity.",
+              "expected": "The speaker emphasized clarity."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The director placed emphasis on the need for change.",
+              "expected": "The director placed emphasis on the need for change."
+            }
+          ]
+        },
+        "provenance": "Direct transitive verb \"emphasise/emphasize\" takes no preposition.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "PREP-TRANS-AWAIT-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Prune redundant preposition \"for\" after direct transitive verb \"await\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(await|awaits|awaited|awaiting)\\s+for\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "We are awaiting for your response.",
+              "expected": "We are awaiting your response."
+            }
+          ],
+          "negative": [
+            {
+              "input": "We are waiting for your response.",
+              "expected": "We are waiting for your response."
+            }
+          ]
+        },
+        "provenance": "\"Await\" is strictly transitive without \"for\".",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "PREP-TRANS-INVESTIGATE-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Prune redundant preposition \"into\" after direct transitive verb \"investigate\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(investigate|investigates|investigated|investigating)\\s+into\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The committee will investigate into the delay.",
+              "expected": "The committee will investigate the delay."
+            }
+          ],
+          "negative": [
+            {
+              "input": "An investigation into the delay began.",
+              "expected": "An investigation into the delay began."
+            }
+          ]
+        },
+        "provenance": "Verb \"investigate\" takes direct object; noun \"investigation\" takes \"into\".",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "PREP-TRANS-COMPRISE-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 91,
+        "description": "Prune erroneous preposition \"of\" after active verb \"comprise\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(comprise|comprises|comprising)\\s+of\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The system comprises of three phases.",
+              "expected": "The system comprises three phases."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The system comprises three phases.",
+              "expected": "The system comprises three phases."
+            }
+          ]
+        },
+        "provenance": "The whole comprises the parts (no \"of\").",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "PREP-COPE-UP-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 91,
+        "description": "Correct non-standard phrasal verb \"cope up with\" to \"cope with\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(cope|copes|coped|coping)\\s+up\\s+with\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1 with",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The staff struggled to cope up with the workload.",
+              "expected": "The staff struggled to cope with the workload."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The staff struggled to cope with the workload.",
+              "expected": "The staff struggled to cope with the workload."
+            }
+          ]
+        },
+        "provenance": "Standard English idiomatic verb is \"cope with\".",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "PREP-RETURN-BACK-001",
+        "category": "PREP",
+        "tier": "tier1-local",
+        "priority": 89,
+        "description": "Prune pleonastic \"back\" after verb \"return\".",
+        "match": {
+          "type": "regex",
+          "pattern": "(?<!\\bin\\s+)\\b(return|returns|returned|returning)\\s+back\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1",
+        "confidence": 0.985,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "They returned back to the office.",
+              "expected": "They returned to the office."
+            }
+          ],
+          "negative": [
+            {
+              "input": "They returned to the office.",
+              "expected": "They returned to the office."
+            }
+          ]
+        },
+        "provenance": "Verb \"return\" already encodes backward motion.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "USAGE-COMPRISE-001",
+        "category": "USAGE",
+        "tier": "tier1-local",
+        "priority": 92,
+        "description": "Correct passive usage solecism \"be comprised of\" to standard \"be composed of\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(is|are|was|were|be|being|been)\\s+comprised\\s+of\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1 composed of",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The system was comprised of three phases.",
+              "expected": "The system was composed of three phases."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The system was composed of three phases.",
+              "expected": "The system was composed of three phases."
+            }
+          ]
+        },
+        "provenance": "Whole composes parts / is composed of parts (\"comprise\" is active, not \"comprised of\").",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "USAGE-IRREGARDLESS-001",
+        "category": "USAGE",
+        "tier": "tier1-local",
+        "priority": 93,
+        "description": "Correct non-standard double-negative adverb \"irregardless\" to \"regardless\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\birregardless\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "regardless",
+        "confidence": 0.995,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "Irregardless of cost, we must proceed.",
+              "expected": "Regardless of cost, we must proceed."
+            }
+          ],
+          "negative": [
+            {
+              "input": "Regardless of cost, we must proceed.",
+              "expected": "Regardless of cost, we must proceed."
+            }
+          ]
+        },
+        "provenance": "Standard formal English lexical usage.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "USAGE-SUPPOSED-TO-001",
+        "category": "USAGE",
+        "tier": "tier1-local",
+        "priority": 92,
+        "description": "Correct missing participial \"-d\" in semi-modal \"be suppose to\" -> \"be supposed to\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(is|are|was|were|am)\\s+suppose\\s+to\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1 supposed to",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "The proposal was suppose to pass.",
+              "expected": "The proposal was supposed to pass."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The proposal was supposed to pass.",
+              "expected": "The proposal was supposed to pass."
+            }
+          ]
+        },
+        "provenance": "Deontic passive construction requires participial \"supposed\".",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "COLLOC-RESEARCH-ART-001",
+        "category": "COLLOC",
+        "tier": "tier1-local",
+        "priority": 91,
+        "description": "Remove erroneous indefinite article before uncountable \"research\" after research verbs.",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(do|does|did|doing|conduct|conducts|conducted|conducting|undertake|undertakes|undertaken|undertaking|perform|performs|performed|performing|carry\\s+out|carries\\s+out|carried\\s+out|carrying\\s+out)\\s+(?:a|an)\\s+research\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "$1 research",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "They conducted a research on climate.",
+              "expected": "They conducted research on climate."
+            }
+          ],
+          "negative": [
+            {
+              "input": "They conducted a research study on climate.",
+              "expected": "They conducted a research study on climate."
+            }
+          ]
+        },
+        "provenance": "Uncountable mass noun \"research\" takes zero indefinite article.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "CONCISE-REGARDING-001",
+        "category": "CONCISE",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Replace wordy prepositional phrases \"with regard(s) to\", \"in regard(s) to\", and \"with respect to\" with \"regarding\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(?:(?:with|in)\\s+regards?\\s+to|with\\s+respect\\s+to)\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "regarding",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "With regard to the budget, we agreed.",
+              "expected": "Regarding the budget, we agreed."
+            }
+          ],
+          "negative": [
+            {
+              "input": "Regarding the budget, we agreed.",
+              "expected": "Regarding the budget, we agreed."
+            }
+          ]
+        },
+        "provenance": "Concise prepositional phrasing.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "CONCISE-IN-THE-EVENT-001",
+        "category": "CONCISE",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Replace wordy conditional conjunction \"in the event that\" with \"if\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\bin\\s+the\\s+event\\s+that\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "if",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "In the event that the deadline moves, tell us.",
+              "expected": "If the deadline moves, tell us."
+            }
+          ],
+          "negative": [
+            {
+              "input": "If the deadline moves, tell us.",
+              "expected": "If the deadline moves, tell us."
+            }
+          ]
+        },
+        "provenance": "Concise conditional subordinator.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "CONCISE-BECAUSE-001",
+        "category": "CONCISE",
+        "tier": "tier1-local",
+        "priority": 91,
+        "description": "Replace wordy causal phrases \"due to the fact that\", \"owing to the fact that\", \"on account of the fact that\", \"in light of the fact that\" with \"because\".",
+        "match": {
+          "type": "regex",
+          "pattern": "\\b(?:due\\s+to|owing\\s+to|on\\s+account\\s+of|because\\s+of|in\\s+light\\s+of)\\s+the\\s+fact\\s+that\\b",
+          "caseInsensitive": true
+        },
+        "replacement": "because",
+        "confidence": 0.99,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "Due to the fact that the tools are new, test them.",
+              "expected": "Because the tools are new, test them."
+            }
+          ],
+          "negative": [
+            {
+              "input": "Because the tools are new, test them.",
+              "expected": "Because the tools are new, test them."
+            }
+          ]
+        },
+        "provenance": "Eliminate bureaucratic \"the fact that\" circumlocution.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
+        "id": "CONCISE-ULTIMATELY-001",
+        "category": "CONCISE",
+        "tier": "tier1-local",
+        "priority": 90,
+        "description": "Replace cliché discourse filler \"at the end of the day,\" with \"ultimately,\" (preserving literal time-of-day references).",
+        "match": {
+          "type": "regex",
+          "pattern": "\\bat\\s+the\\s+end\\s+of\\s+the\\s+day(?=,)",
+          "caseInsensitive": true
+        },
+        "replacement": "ultimately",
+        "confidence": 0.985,
+        "autoApply": true,
+        "enabled": true,
+        "requires": [
+          "local_regex"
+        ],
+        "guards": [
+          "not_inside_protected_span"
+        ],
+        "examples": {
+          "positive": [
+            {
+              "input": "At the end of the day, the results speak for themselves.",
+              "expected": "Ultimately, the results speak for themselves."
+            }
+          ],
+          "negative": [
+            {
+              "input": "The technicians locked the lab at the end of the day.",
+              "expected": "The technicians locked the lab at the end of the day."
+            }
+          ]
+        },
+        "provenance": "Cliché idiom replacement with precise adverb.",
+        "status": "stable",
+        "riskLevel": "medium"
+      },
+      {
         "id": "AGR-SV-PLURAL-IS-001",
         "category": "AGR",
         "tier": "tier1-local",
@@ -5848,6 +6398,20 @@
       "PREP-CASE-001",
       "PRON-CASE-LET-001",
       "STYLE-SPLIT-INF-001",
+      "PREP-TRANS-EMPHASISE-001",
+      "PREP-TRANS-AWAIT-001",
+      "PREP-TRANS-INVESTIGATE-001",
+      "PREP-TRANS-COMPRISE-001",
+      "PREP-COPE-UP-001",
+      "PREP-RETURN-BACK-001",
+      "USAGE-COMPRISE-001",
+      "USAGE-IRREGARDLESS-001",
+      "USAGE-SUPPOSED-TO-001",
+      "COLLOC-RESEARCH-ART-001",
+      "CONCISE-REGARDING-001",
+      "CONCISE-IN-THE-EVENT-001",
+      "CONCISE-BECAUSE-001",
+      "CONCISE-ULTIMATELY-001",
       "AGR-SV-PLURAL-IS-001",
       "AGR-SV-PLURAL-WAS-001",
       "AGR-SV-PLURAL-HAS-001",
@@ -5872,16 +6436,55 @@
       "AGR-HEAD-EMBED-001",
       "STYLE-DANGLING-001",
       "DISC-PRON-001",
-      "TNS-HARMONY-001"
+      "TNS-HARMONY-001",
+      "SYN-DANG-PERF-001",
+      "SYN-DANG-PERF-NEG-001",
+      "SYN-DANG-PERF-INTR-001",
+      "SYN-DANG-PREP-GER-001",
+      "SYN-DANG-ELLIP-001",
+      "SYN-DANG-PRES-PART-001",
+      "SYN-DANG-INF-001",
+      "AGR-HEAD-PLURAL-001",
+      "TENSE-COORD-001",
+      "SUBJ-MAND-MODAL-001",
+      "SUBJ-MAND-VERB-001",
+      "EMBED-QUESTION-REPORTED-001",
+      "REL-HUMAN-WHO-001",
+      "PREP-TRANS-STRESS-001",
+      "PREP-TRANS-MENTION-001",
+      "PREP-TRANS-REQUEST-001",
+      "PREP-TRANS-REGRET-001",
+      "PREP-TRANS-ENTER-001",
+      "PREP-TRANS-CONTACT-001",
+      "PREP-TRANS-REACH-001",
+      "COLLOC-RESEARCH-MAKE-001",
+      "COLLOC-LIGHTVERB-DO-MAKE-001",
+      "COLLOC-UNCOUNT-ART-001",
+      "SYN-EXPLETIVE-PASSIVE-001",
+      "SYN-PASSIVE-TOBE-BY-001",
+      "SYN-STACCATO-MERGE-001",
+      "CONCISE-EXPLETIVE-NOTE-001",
+      "CONCISE-IN-ORDER-TO-001",
+      "CONCISE-ABILITY-001",
+      "CONCISE-NEEDLESS-001",
+      "CONCISE-PLETHORA-001",
+      "CONCISE-CLICHE-DELVE-001",
+      "CONCISE-CLICHE-PIVOTAL-001",
+      "CONCISE-PLEONASM-TIME-001",
+      "PUN-OXFORD-001",
+      "PRON-OBJ-CASE-001",
+      "PREP-GERUND-001",
+      "AUX-BE-PROG-001",
+      "CONCISE-ETC-PLEONASM-001"
     ],
     "counts": {
-      "total": 156,
-      "exported": 143,
-      "excluded": 13
+      "total": 209,
+      "exported": 157,
+      "excluded": 52
     }
   },
   "manifest": {
-    "checksum": "ad751234",
+    "checksum": "c154e629",
     "algorithm": "fnv1a32"
   }
 }
