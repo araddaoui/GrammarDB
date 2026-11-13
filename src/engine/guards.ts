@@ -107,7 +107,8 @@ export function shouldGuardCandidate(
   }
 
   // EX-QUOTE-001: Quoted text guard when quote-preservation mode is active
-  if (config.skipDirectQuotes && !ignoresProtected) {
+  const protectQuotes = config.protectQuotes ?? config.skipDirectQuotes ?? true;
+  if (protectQuotes && !ignoresProtected) {
     const isInsideQuote = protectedSpans.some(
       (s) => s.kind === 'quoted-immutable' && cand.start >= s.start && cand.end <= s.end
     );

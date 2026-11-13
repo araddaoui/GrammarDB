@@ -3,6 +3,34 @@ import { DANGLING_MODIFIER_RULES } from './danglingModifiers';
 import { SYNTAX_HARMONY_RULES } from './syntaxHarmonies';
 import { STYLE_COLLOCATION_RULES } from './styleAndCollocations';
 
+// --- Phase A: certified tables unioned from production applyGrammarLayer -----
+// Curated lexical classes used for copula/auxiliary agreement and doubled
+// subjects. Kept lexical (not morphological) so agreement never auto-applies
+// to nouns outside the certified sets (e.g. "dogs", "information").
+const AGR_PLURAL_NOUNS =
+  'findings|results|factors|studies|analyses|policies|approaches|strategies|mechanisms|processes|' +
+  'outcomes|implications|developments|challenges|opportunities|measures|changes|issues|matters|effects|' +
+  'aspects|features|dimensions|laws|rules|models|theories';
+const AGR_SINGULAR_NOUNS =
+  'finding|result|factor|study|analysis|policy|approach|strategy|mechanism|process|outcome|implication|' +
+  'development|challenge|opportunity|measure|change|issue|matter|effect|aspect|feature|dimension|law|' +
+  'rule|model|theory';
+const DOUBLED_SUBJECT_NOUNS =
+  'study|analysis|approach|government|policy|system|process|findings|survey|research|work|text|chapter|' +
+  'article|paper|book|argument|field|model|project|report|section|paragraph|thesis|theory|strategy|' +
+  'programme|program|initiative|regime|state|country|army|force|coalition|alliance|company|team|' +
+  'department|school|court|council|committee|party|union|staff|faculty|society|economy|market|sector|industry';
+const DOUBLED_SUBJECT_VERBS =
+  'shows|show|reveals|reveal|demonstrates|demonstrate|highlights|highlight|concludes|conclude|argues|' +
+  'argue|explains|explain|provides|provide|illustrates|illustrate|suggests|suggest|indicates|indicate|' +
+  'claims|claim|asserts|assert|describes|describe|examines|examine|explores|explore|discusses|discuss|' +
+  'advances|advanced|advance|entered|enters|emerges|emerged|moves|moved|acts|acted|responds|responded|' +
+  'reacts|reacted|differs|differed|agrees|agreed|declines|declined|grows|grew|rises|rose|exerts|exerted|' +
+  'exercises|exercised|pursues|pursued|promotes|promoted|implements|implemented|launches|launched|' +
+  'conducts|conducted|opposes|opposed|resists|resisted|supports|supported|expands|expanded|extends|' +
+  'extended|mobilizes|mobilized|deploys|deployed|marches|marched|withdraws|withdrew|intervenes|' +
+  'intervened|escalates|escalated';
+
 export const COMPREHENSIVE_RULES: Rule[] = [
   // ==========================================
   // PUNCTUATION & TYPOGRAPHY MECHANICS (PUN)
@@ -2577,6 +2605,75 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     enabled: true,
   },
   {
+    id: 'PREP-EMPHASIZE-ON-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: "Prune redundant preposition 'on' after 'emphasize'.",
+    match: {
+      type: 'regex',
+      pattern: '\\b(emphasise|emphasize|emphasises|emphasizes|emphasised|emphasized|emphasising|emphasizing)\\s+on\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1',
+    confidence: 0.98,
+    priority: 91,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'They emphasize on accuracy.', expected: 'They emphasize accuracy.' }],
+      negative: [{ input: 'They lay emphasis on accuracy.', expected: 'They lay emphasis on accuracy.' }],
+    },
+    provenance: 'Verb-prep deletion to match baseline behaviour.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-MENTION-ABOUT-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: "Prune redundant preposition 'about' after 'mention'.",
+    match: {
+      type: 'regex',
+      pattern: '\\b(mention|mentions|mentioned|mentioning)\\s+about\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1',
+    confidence: 0.98,
+    priority: 91,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'He mentioned about the issue.', expected: 'He mentioned the issue.' }],
+      negative: [{ input: 'He made a mention about the issue.', expected: 'He made a mention about the issue.' }],
+    },
+    provenance: 'Verb-prep deletion to match baseline behaviour.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-COMPRISES-OF-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: "Prune redundant preposition 'of' after 'comprise'.",
+    match: {
+      type: 'regex',
+      pattern: '\\b(comprise|comprises|comprised|comprising)\\s+of\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1',
+    confidence: 0.98,
+    priority: 91,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The set comprises of ten items.', expected: 'The set comprises ten items.' }],
+      negative: [{ input: 'The set is comprised of ten items.', expected: 'The set is comprised of ten items.' }],
+    },
+    provenance: 'Verb-prep deletion to match baseline behaviour.',
+    enabled: true,
+  },
+  {
     id: 'PREP-GERUND-INSIST-001',
     category: 'PREP',
     tier: 'tier1-local',
@@ -2715,18 +2812,18 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     enabled: true,
   },
   {
-    id: 'PREP-DIFFERENT-THAN-001',
+    id: 'PREP-DIFFERENT-FROM-001',
     category: 'PREP',
     tier: 'tier1-local',
-    description: 'Correct "different than [NP]" to "different from [NP]" in academic register.',
+    description: 'Correct "different than/with [NP]" to "different from [NP]".',
     match: {
       type: 'regex',
-      pattern: '\\bdifferent\\s+than\\s+(the|this|that|a|an|each|every|all|most|other|[a-z]+s)\\b',
+      pattern: '\\bdifferent\\s+(?:than|with)\\b',
       caseInsensitive: true,
     },
-    replacement: 'different from $1',
-    confidence: 0.985,
-    priority: 88,
+    replacement: 'different from',
+    confidence: 0.99,
+    priority: 92,
     autoApply: true,
     requires: ['local_regex'],
     guards: ['ignore_protected_spans'],
@@ -2767,10 +2864,10 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     description: 'Correct colloquial "based off of" / "based off" to "based on".',
     match: {
       type: 'regex',
-      pattern: '\\bbased\\s+off\\s+(?:of\\s+)?',
+      pattern: '\\bbased\\s+off(?:\\s+of)?\\b',
       caseInsensitive: true,
     },
-    replacement: 'based on ',
+    replacement: 'based on',
     confidence: 0.99,
     priority: 91,
     autoApply: true,
@@ -2852,7 +2949,213 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     provenance: 'Standard adjective complementation.',
     enabled: true,
   },
-
+  {
+    id: 'PREP-RELEVANT-FOR-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "relevant for/with" to "relevant to".',
+    match: {
+      type: 'regex',
+      pattern: '\\brelevant\\s+(?:for|with)\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'relevant to',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'This is relevant for the topic.', expected: 'This is relevant to the topic.' }],
+      negative: [{ input: 'This is relevant to the topic.', expected: 'This is relevant to the topic.' }],
+    },
+    provenance: 'Standard adjective complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-ASSOCIATED-TO-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "associated to" to "associated with".',
+    match: {
+      type: 'regex',
+      pattern: '\\bassociated\\s+to\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'associated with',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The risk is associated to the delay.', expected: 'The risk is associated with the delay.' }],
+      negative: [{ input: 'The risk is associated with the delay.', expected: 'The risk is associated with the delay.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-COMPOSED-BY-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "composed by" to "composed of".',
+    match: {
+      type: 'regex',
+      pattern: '\\bcomposed\\s+by\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'composed of',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The panel is composed by experts.', expected: 'The panel is composed of experts.' }],
+      negative: [{ input: 'The panel is composed of experts.', expected: 'The panel is composed of experts.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-SIMILAR-TO-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "similar with/than" to "similar to".',
+    match: {
+      type: 'regex',
+      pattern: '\\bsimilar\\s+(?:with|than)\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'similar to',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'These are similar with the previous results.', expected: 'These are similar to the previous results.' }],
+      negative: [{ input: 'These are similar to the previous results.', expected: 'These are similar to the previous results.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-CONTRARY-TO-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "contrary in/with/for/at" to "contrary to".',
+    match: {
+      type: 'regex',
+      pattern: '\\bcontrary\\s+(?:in|with|for|at)\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'contrary to',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'This is contrary in expectations.', expected: 'This is contrary to expectations.' }],
+      negative: [{ input: 'This is contrary to expectations.', expected: 'This is contrary to expectations.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-RESPECT-FOR-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "with respect for" to "with respect to".',
+    match: {
+      type: 'regex',
+      pattern: '\\bwith\\s+respect\\s+for\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'with respect to',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'With respect for the budget, it is fine.', expected: 'With respect to the budget, it is fine.' }],
+      negative: [{ input: 'With respect to the budget, it is fine.', expected: 'With respect to the budget, it is fine.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-COMMITTED-FOR-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "committed for" to "committed to".',
+    match: {
+      type: 'regex',
+      pattern: '\\bcommitted\\s+for\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'committed to',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'She is committed for the cause.', expected: 'She is committed to the cause.' }],
+      negative: [{ input: 'She is committed to the cause.', expected: 'She is committed to the cause.' }],
+    },
+    provenance: 'Standard complementation.',
+    enabled: true,
+  },
+  {
+    id: 'PREP-BEHALF-001',
+    category: 'PREP',
+    tier: 'tier1-local',
+    description: 'Correct "on the behalf of" to "on behalf of".',
+    match: {
+      type: 'regex',
+      pattern: '\\bon\\s+the\\s+behalf\\s+of\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'on behalf of',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'On the behalf of the team, I thank you.', expected: 'On behalf of the team, I thank you.' }],
+      negative: [{ input: 'On behalf of the team, I thank you.', expected: 'On behalf of the team, I thank you.' }],
+    },
+    provenance: 'Standard idiom.',
+    enabled: true,
+  },
+  {
+    id: 'SPELL-IRREGARDLESS-001',
+    category: 'SPELL',
+    tier: 'tier1-local',
+    description: 'Correct "irregardless" to "regardless".',
+    match: {
+      type: 'regex',
+      pattern: '\\birregardless\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'regardless',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'It is irregardless of the cost.', expected: 'It is regardless of the cost.' }],
+      negative: [{ input: 'It is regardless of the cost.', expected: 'It is regardless of the cost.' }],
+    },
+    provenance: 'Common nonstandard spelling.',
+    enabled: true,
+  },
   // ==========================================
   // ARTICLES (ART)
   // ==========================================
@@ -2863,7 +3166,7 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     description: "Correct indefinite article 'a' to 'an' before initial vowel sounds in academic prose.",
     match: {
       type: 'regex',
-      pattern: '\\ba\\s+(evaluation|analysis|algorithm|experiment|outcome|interview|investigation|overview|issue|effect|author|observation|assessment|obstacle|emergency|anomaly|instance|explanation|increase|insight|option|undertaking)\\b',
+      pattern: '\\ba\\s+(evaluation|analysis|algorithm|experiment|outcome|interview|investigation|overview|issue|effect|author|observation|assessment|obstacle|emergency|anomaly|instance|explanation|increase|insight|option|undertaking|apple|orange|elephant|idea|island|uncle|example|item|answer|area|event|image|opinion)\\b',
       caseInsensitive: true,
     },
     replacement: 'an $1',
@@ -3182,6 +3485,241 @@ export const COMPREHENSIVE_RULES: Rule[] = [
   ...DANGLING_MODIFIER_RULES,
   ...SYNTAX_HARMONY_RULES,
   ...STYLE_COLLOCATION_RULES,
+
+  // ==========================================
+  // PHASE A: CERTIFIED AGREEMENT & ARTICLE TABLES
+  // (unioned from production applyGrammarLayer; lexical, fail-closed)
+  // ==========================================
+  {
+    id: 'AGR-SV-PLURAL-IS-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct copula agreement "plural noun + is" to "are" (e.g. "the findings is" -> "the findings are").',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_PLURAL_NOUNS + '))\\s+is\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 are',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The findings is consistent with the model.', expected: 'The findings are consistent with the model.' }],
+      negative: [{ input: 'The findings are consistent with the model.', expected: 'The findings are consistent with the model.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-plural).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-PLURAL-WAS-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct copula agreement "plural noun + was" to "were".',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_PLURAL_NOUNS + '))\\s+was\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 were',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The results was inconclusive.', expected: 'The results were inconclusive.' }],
+      negative: [{ input: 'The results were inconclusive.', expected: 'The results were inconclusive.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-plural).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-PLURAL-HAS-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct auxiliary agreement "plural noun + has" to "have".',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_PLURAL_NOUNS + '))\\s+has\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 have',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The studies has shown a trend.', expected: 'The studies have shown a trend.' }],
+      negative: [{ input: 'The studies have shown a trend.', expected: 'The studies have shown a trend.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-plural).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-SINGULAR-ARE-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct copula agreement "singular noun + are" to "is" (e.g. "a study are" -> "a study is").',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_SINGULAR_NOUNS + '))\\s+are\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 is',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'A study are needed to settle the debate.', expected: 'A study is needed to settle the debate.' }],
+      negative: [{ input: 'A study is needed to settle the debate.', expected: 'A study is needed to settle the debate.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-singular).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-SINGULAR-WERE-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct copula agreement "singular noun + were" to "was".',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_SINGULAR_NOUNS + '))\\s+were\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 was',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The approach were effective.', expected: 'The approach was effective.' }],
+      negative: [{ input: 'The approach was effective.', expected: 'The approach was effective.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-singular).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-SINGULAR-HAVE-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct auxiliary agreement "singular noun + have" to "has".',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_SINGULAR_NOUNS + '))\\s+have\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 has',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The model have improved.', expected: 'The model has improved.' }],
+      negative: [{ input: 'The model has improved.', expected: 'The model has improved.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-singular).',
+    enabled: true,
+  },
+  {
+    id: 'AGR-SV-SINGULAR-DO-001',
+    category: 'AGR',
+    tier: 'tier1-local',
+    description: 'Correct do-support agreement "singular noun + do" to "does".',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + AGR_SINGULAR_NOUNS + '))\\s+do\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 does',
+    confidence: 0.99,
+    priority: 93,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'The analysis do not support it.', expected: 'The analysis does not support it.' }],
+      negative: [{ input: 'The analysis does not support it.', expected: 'The analysis does not support it.' }],
+    },
+    provenance: 'Certified production agreement table (applyGrammarLayer sv-singular).',
+    enabled: true,
+  },
+  {
+    id: 'SYN-DOUBLED-SUBJ-001',
+    category: 'SYN',
+    tier: 'tier1-local',
+    description: 'Prune redundant resumptive subject pronoun after a lexical subject (e.g. "the army they advanced" -> "the army advanced").',
+    match: {
+      type: 'regex',
+      pattern: '\\b((?:the\\s+)?(?:' + DOUBLED_SUBJECT_NOUNS + '))\\s+(?:it|they)\\s+(' + DOUBLED_SUBJECT_VERBS + ')\\b',
+      caseInsensitive: true,
+    },
+    replacement: '$1 $2',
+    confidence: 0.99,
+    priority: 92,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'This approach it shows the trend clearly.', expected: 'This approach shows the trend clearly.' }],
+      negative: [{ input: 'This approach shows the trend clearly.', expected: 'This approach shows the trend clearly.' }],
+    },
+    provenance: 'Certified production doubled-subject table (applyGrammarLayer doubled-subject).',
+    enabled: true,
+  },
+  {
+    id: 'ART-INDEF-SILENT-H-001',
+    category: 'ART',
+    tier: 'tier1-local',
+    description: "Correct 'a' to 'an' before silent-h and letter-name words (e.g. 'a hour' -> 'an hour').",
+    match: {
+      type: 'regex',
+      pattern: '\\ba\\s+(hour|hourly|honest|honesty|honour|honor|honourable|honorable|honorary|heir|heiress|NGO|MBA|FBI)\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'an $1',
+    confidence: 0.99,
+    priority: 90,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'We waited a hour for the result.', expected: 'We waited an hour for the result.' }],
+      negative: [{ input: 'We waited an hour for the result.', expected: 'We waited an hour for the result.' }],
+    },
+    provenance: 'Phonological article agreement before silent-h / vowel-sound letter names (applyGrammarLayer a-an-silent-h).',
+    enabled: true,
+  },
+  {
+    id: 'ART-INDEF-U-SOUND-001',
+    category: 'ART',
+    tier: 'tier1-local',
+    description: "Correct 'an' to 'a' before consonant-sound u-/eu-/one- words (e.g. 'an university' -> 'a university').",
+    match: {
+      type: 'regex',
+      pattern: '\\ban\\s+(university|union|uniform|unique|unit|useful|user|used|usual|usage|utensil|eulogy|euphoria|Europe|European|euro|one|once|ubiquitous|unified|unilateral|upward|uranium|UFO|URL|hourglass)\\b',
+      caseInsensitive: true,
+    },
+    replacement: 'a $1',
+    confidence: 0.99,
+    priority: 90,
+    autoApply: true,
+    requires: ['local_regex'],
+    guards: ['ignore_protected_spans'],
+    examples: {
+      positive: [{ input: 'An university in Tehran faced this challenge.', expected: 'A university in Tehran faced this challenge.' }],
+      negative: [{ input: 'A university in Tehran faced this challenge.', expected: 'A university in Tehran faced this challenge.' }],
+    },
+    provenance: 'Phonological article agreement before consonant-sound u-/eu-/one- words (applyGrammarLayer an-a-eu-words).',
+    enabled: true,
+  },
 ];
 
 export const OFFICIAL_GRAMMAR_RULES: GrammarRulesSchema = {

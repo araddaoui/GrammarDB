@@ -1,0 +1,101 @@
+﻿];
+var GRAMMAR_SINGULAR_NOUNS = [
+  "finding","result","factor","study","analysis","policy","approach","strategy",
+  "mechanism","process","outcome","implication","development","challenge",
+  "opportunity","measure","change","issue","matter","effect","aspect","feature",
+  "dimension","law","rule","model","theory"
+];
+// A preceding modal/auxiliary means "have"/"do" is the bare infinitive, not a
+// finite form agreeing with the pronoun: "Did she have...", "Does he have...",
+// "Will it do...". The pronoun-agreement rules must never reorder those.
+// --- Certified agreement / coordination rules (editor + meter) ----------------
+// S-V agreement on INFLECTED finite verbs, bound to the same curated noun tables
+// below. A window of up to two intensifier adverbs is allowed between subject and
+// verb; modals/auxiliaries are never in that window, so neither rule can reorder
+// "will show", "can work", etc. Every construct is a defect whose fix is fully
+// deterministic, so the SAME table both edits and measures (no drift). MUST be
+// declared ABOVE GRAMMAR_RULES: the sv-finite rule regexes are built at module
+// load from these strings (var-hoisting would otherwise inject "undefined").
+var CERTIFIED_INTENSIFIERS =
+  "clearly|often|also|still|even|just|quite|simply|largely|mainly|primarily|chiefly|" +
+  "typically|usually|frequently|constantly|readily|directly|strongly|ultimately|eventually|" +
+  "effectively|easily|actively|plainly|evidently|markedly|notably|visibly|consistently|" +
+  "repeatedly|persistently";
+var CERTIFIED_FINITE_S =
+  "shows|demonstrates|indicates|suggests|reveals|provides|constitutes|requires|creates|poses|" +
+  "offers|plays|affects|describes|explains|argues|claims|asserts|examines|explores|" +
+  "increases|decreases|leads|contributes|enables|allows|helps|tends|remains|seems|appears|" +
+  "exists|differs|occurs|results|manifests|illustrates|highlights|emphasizes|" +
+  "underlines|involves|depends|reflects|affirms";
+var CERTIFIED_FINITE_BARE =
+  "show|demonstrate|indicate|suggest|reveal|provide|constitute|require|create|pose|offer|play|" +
+  "affect|describe|explain|argue|claim|assert|examine|explore|discuss|increase|decrease|lead|" +
+  "contribute|enable|allow|help|tend|remain|seem|appear|exist|differ|occur|result|manifest|" +
+  "illustrate|highlight|emphasize|underline|involve|depend|reflect|affirm";
+// Past-tense clause heads that demand an -ed form on a following coordinated
+// bare verb ("These changes saw ... and manifest" -> "... and manifested").
+var CERTIFIED_PAST_HEADS =
+  "saw|showed|made|had|became|marked|unfolded|began|reflected|triggered|generated|spurred|" +
+  "sparked|brought|led|produced|took|gave|moved|grew|developed|started|continued|resulted|" +
+  "remained|emerged|occurred|demonstrated|illustrated|rendered|represented|established|created|" +
+  "introduced|initiated|conducted|presented|offered|provided|reported|examined|described|" +
+  "argued|concluded|claimed|asserted|enabled|allowed|contributed|helped|witnessed|experienced|" +
+  "ensured|drew|invoked|signalled|signaled|constituted|involved|entailed|included|responded";
+var CERTIFIED_PAST_TAIL =
+  "in|with|from|on|at|as|by|for|through|during|across|among|under|over|between|alongside|off|out|up|down";
+// Bare verbs a past-tense coordinate must NOT end in -ed when the object of a
+// causative ("saw literacy emerge") â€” these are EXCLUDED from the coordinated
+// rule so a genuinely causative construction is never "corrected".
+var CERTIFIED_COORD_BARE =
+  "manifest|occur|result|emerge|arise|constitute|involve|entail|include|represent|respond|" +
+  "conduct|perform|undertake|initiate|advance|act|form|produce|express|assert|affirm|depict|expound";
+var CERTIFIED_PAST_HEADS_RE = new RegExp("\\b(" + CERTIFIED_PAST_HEADS + ")\\b", "i");
+var CERTIFIED_COORD_RE = new RegExp(
+  "\\b(and)\\s+(" + CERTIFIED_COORD_BARE + ")\\b(?=\\s+(" + CERTIFIED_PAST_TAIL + ")\\b)", "gi");
+var AUX_PRECEDER = {
+  did: 1, "didnt": 1, "didnt't": 1, do: 1, does: 1, will: 1, would: 1, can: 1,
+  could: 1, shall: 1, should: 1, may: 1, might: 1, must: 1, wont: 1, wouldnt: 1,
+  couldnt: 1, shouldnt: 1, cant: 1, dont: 1, doesnt: 1
+};
+var GRAMMAR_RULES = [
+  // a/an by sound: silent-h and letter-name words take "an"; eu-/u-/one- words
+  // (vowel letter, consonant sound) take "a".
+  { id: "a-an-silent-h",
+    re: /\b(a)\s+(hour|hourly|honest|honour|honor|honourable|honorable|honorary|heir|heiress|NGO|MBA|FBI)\b/gi,
+    repl: function (m) { return "an " + m[2]; } },
+  { id: "an-a-eu-words",
+    re: /\b(an)\s+(university|union|uniform|unique|unit|useful|user|used|usual|usage|utensil|eulogy|euphoria|Europe|European|euro|one|once|ubiquitous|unified|unilateral|upward|uranium|UFO|URL|hourglass)\b/gi,
+    repl: function (m) { return "a " + m[2]; } },
+  // Subject-verb agreement in high-confidence plural/singular frames.
+  { id: "sv-plural",
+    re: new RegExp("\\b(the\\s+)?((" + GRAMMAR_PLURAL_NOUNS.join("|") + "))\\s+(is|was|has)\\b", "gi"),
+    repl: function (m) { var map = { is: "are", was: "were", has: "have" }; return (m[1] || "") + m[2] + " " + map[m[4].toLowerCase()]; } },
+  { id: "sv-singular",
+    re: new RegExp("\\b(the\\s+)?((" + GRAMMAR_SINGULAR_NOUNS.join("|") + "))\\s+(are|were|have|do)\\b", "gi"),
+    repl: function (m) { var map = { are: "is", were: "was", have: "has", do: "does" }; return (m[1] || "") + m[2] + " " + map[m[4].toLowerCase()]; } },
+  // Pronoun-auxiliary agreement: he/she/it + have/do -> has/does; plural
+  // pronouns + has/does -> have/do.
+  { id: "pron-singular",
+    re: /\b(he|she|it)\s+(have|do)\b/gi,
+    guard: function (s, idx) {
+      var pre = s.slice(0, idx).replace(/[""\u201C\u201D\u2018\u2019,;:!?()\[\]\d]+/g, " ").replace(/\s+/g, " ").trim();
+      var tok = pre.split(/\s+/).pop() || "";
+      return !!AUX_PRECEDER[tok.toLowerCase()];
+    },
+    repl: function (m) { return m[1] + " " + (m[2].toLowerCase() === "have" ? "has" : "does"); } },
+  { id: "pron-plural",
+    re: /\b(they|we|you|people|researchers|scholars|authors|writers)\s+(has|does)\b/gi,
+    repl: function (m) { return m[1] + " " + (m[2].toLowerCase() === "has" ? "have" : "do"); } },
+  // Doubled subject ("the study it shows" -> "the study shows"), only when a
+  // finite verb follows immediately so legitimate relative clauses survive.
+  { id: "doubled-subject",
+    re: /\b(the\s+)?(study|analysis|approach|government|policy|system|process|findings|survey|research|work|text|chapter|article|paper|book|argument|field|model|project|report|section|paragraph|thesis|theory|strategy|programme|program|initiative|regime|state|country|army|force|coalition|alliance|company|team|department|school|court|council|committee|party|union|staff|faculty|society|economy|market|sector|industry)\s+(it|they)\s+(shows|show|reveals|reveal|demonstrates|demonstrate|highlights|highlight|is|are|was|were|has|have|concludes|conclude|argues|argue|explains|explain|provides|provide|illustrates|illustrate|suggests|suggest|indicates|indicate|claims|claim|asserts|assert|describes|describe|examines|examine|explores|explore|discusses|discuss|advances|advanced|advance|entered|enters|emerges|emerged|moves|moved|acts|acted|responds|responded|reacts|reacted|differs|differed|agrees|agreed|declines|declined|grows|grew|rises|rose|exerts|exerted|exercises|exercised|pursues|pursued|promotes|promoted|implements|implemented|launches|launched|conducts|conducted|opposes|opposed|resists|resisted|supports|supported|expands|expanded|extends|extended|mobilizes|mobilized|deploys|deployed|marches|marched|withdraws|withdrew|intervenes|intervened|escalates|escalated)\b/gi,
+    repl: function (m) { return (m[1] || "") + m[2] + " " + m[4]; } },
+  // S-V agreement on INFLECTED finite verbs: a plural noun never takes an -s
+  // finite verb, a singular noun always does (present tense, no modal in the
+  // window â€” modals are never in CERTIFIED_INTENSIFIERS). These extend the
+  // is/was/has frames above to the full finite-verb table deterministically.
+  { id: "sv-finite-plural",
+    re: new RegExp("\\b(the\\s+)?(" + GRAMMAR_PLURAL_NOUNS.join("|") + ")((?:\\s+(?:" + CERTIFIED_INTENSIFIERS + ")){0,2})\\s+(" + CERTIFIED_FINITE_S + ")\\b", "gi"),
+    repl: function (m) { return (m[1] || "") + m[2] + m[3] + " " + m[4].replace(/s$/i, ""); } },
+  { id: "sv-finite-singular",

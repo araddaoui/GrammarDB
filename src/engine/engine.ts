@@ -2,66 +2,55 @@ import {
   CorrectionCandidate,
   EngineConfig,
   EngineResult,
+  GrammarExceptionsSchema,
   ProtectedSpan,
   Rule,
 } from './types';
 import { findProtectedSpans } from './protectedSpans';
 import { segmentSentences } from './segmenter';
-import { SEED_RULES, OFFICIAL_GRAMMAR_RULES } from './rules';
-import { shouldGuardCandidate, OFFICIAL_GRAMMAR_EXCEPTIONS } from './guards';
-import { validateRulesSchema, validateExceptionsSchema } from './schemaValidator';
+import { shouldGuardCandidate } from './guards';
 import { analyzeClausesAndDiscourse, extractDependencyCandidates } from './clauseAnalyzer';
 import { analyzeConditionals, CONDITIONAL_RULES } from './conditionals';
 import { analyzeDanglingModifiers, DANGLING_MODIFIER_RULES } from './danglingModifiers';
 import { analyzeSyntaxHarmonies, SYNTAX_HARMONY_RULES } from './syntaxHarmonies';
 import { analyzeStyleAndCollocations, STYLE_COLLOCATION_RULES } from './styleAndCollocations';
+import { buildCanonicalExceptionPack, buildCanonicalRulePack } from './canonicalPack';
+import { RuleStore, tryCreateRuleStore } from './ruleStore';
+import { DEFAULT_MIN_AUTO_APPLY_CONFIDENCE } from './policy';
 
 export class IdiomOptimaEngine {
   private rules: Rule[];
   private isRulesValid: boolean = true;
   private isExceptionsValid: boolean = true;
   private schemaErrors: string[] = [];
+  private readonly ruleStore: RuleStore | null = null;
 
-  constructor(customRules?: Rule[]) {
-    // Schema validation on load: fail closed if malformed
-    const rulesCheck = validateRulesSchema(customRules ? { schemaVersion: '0.1.0', rules: customRules } : OFFICIAL_GRAMMAR_RULES);
-    const exceptionsCheck = validateExceptionsSchema(OFFICIAL_GRAMMAR_EXCEPTIONS);
+  constructor(customRules?: Rule[], customExceptions?: GrammarExceptionsSchema) {
+    // Build the canonical pack (or an explicit override) and validate on load.
+    const pack = customRules
+      ? { ...buildCanonicalRulePack(), rules: customRules }
+      : buildCanonicalRulePack();
+    const exceptions = customExceptions ?? buildCanonicalExceptionPack();
 
-    this.isRulesValid = rulesCheck.isValid;
-    this.isExceptionsValid = exceptionsCheck.isValid;
+    // Fail closed if malformed: an invalid store yields zero rules.
+    const result = tryCreateRuleStore(pack, exceptions);
 
-    if (!rulesCheck.isValid) {
-      this.schemaErrors.push(...rulesCheck.errors);
-      console.error('IdiomOptima Rules Schema Validation Failed:', rulesCheck.errors);
-    }
-    if (!exceptionsCheck.isValid) {
-      this.schemaErrors.push(...exceptionsCheck.errors);
-      console.error('IdiomOptima Exceptions Schema Validation Failed:', exceptionsCheck.errors);
-    }
+    this.isRulesValid = result.diagnostics.rules.isValid;
+    this.isExceptionsValid = result.diagnostics.exceptions.isValid;
 
-    // Fail-closed: if schema is invalid, no rules are loaded
-    if (!this.isRulesValid || !this.isExceptionsValid) {
+    if (!result.store) {
+      this.schemaErrors.push(...result.errors);
+      console.error('IdiomOptima rule store validation failed:', result.errors);
       this.rules = [];
+      this.ruleStore = null;
     } else {
-      this.rules = [...(customRules || SEED_RULES)];
-      for (const cr of CONDITIONAL_RULES) {
-        if (!this.rules.some((r) => r.id === cr.id)) {
-          this.rules.push(cr);
-        }
-      }
-      for (const dr of DANGLING_MODIFIER_RULES) {
-        if (!this.rules.some((r) => r.id === dr.id)) {
-          this.rules.push(dr);
-        }
-      }
-      for (const sr of SYNTAX_HARMONY_RULES) {
-        if (!this.rules.some((r) => r.id === sr.id)) {
-          this.rules.push(sr);
-        }
-      }
-      for (const scr of STYLE_COLLOCATION_RULES) {
-        if (!this.rules.some((r) => r.id === scr.id)) {
-          this.rules.push(scr);
+      this.ruleStore = result.store;
+      this.rules = result.store.getRules();
+      for (const moduleRules of [CONDITIONAL_RULES, DANGLING_MODIFIER_RULES, SYNTAX_HARMONY_RULES, STYLE_COLLOCATION_RULES]) {
+        for (const r of moduleRules) {
+          if (!this.rules.some((existing) => existing.id === r.id)) {
+            this.rules.push(r);
+          }
         }
       }
     }
@@ -77,6 +66,10 @@ export class IdiomOptimaEngine {
 
   public getRules(): Rule[] {
     return this.rules;
+  }
+
+  public getRuleStore(): RuleStore | null {
+    return this.ruleStore;
   }
 
   public getSchemaStatus(): { isValid: boolean; errors: string[] } {
@@ -147,7 +140,10 @@ export class IdiomOptimaEngine {
       textModifiedInPass = false;
 
       // 1. Protected-span scan before rule matching
-      protectedSpans = findProtectedSpans(currentText, config.skipDirectQuotes ?? false);
+      protectedSpans = findProtectedSpans(
+        currentText,
+        config.protectQuotes ?? config.skipDirectQuotes ?? true
+      );
 
       // 2. Sentence segmentation
       const sentences = segmentSentences(currentText);
@@ -396,8 +392,10 @@ export class IdiomOptimaEngine {
         allCandidates.push(cand);
 
         const rule = this.rules.find((r) => r.id === cand.ruleId);
+        const minAutoApply =
+          config.minAutoApplyConfidence ?? DEFAULT_MIN_AUTO_APPLY_CONFIDENCE;
         const isEligibleAuto =
-          cand.confidence >= 0.95 &&
+          cand.confidence >= minAutoApply &&
           rule?.autoApply !== false &&
           (rule?.tier === 'tier1-local' || rule?.tier === 'tier2-syntax' || rule?.tier === undefined) &&
           rule?.action !== 'suggest' &&

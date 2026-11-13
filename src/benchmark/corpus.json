@@ -1,0 +1,256 @@
+{
+  "corpusId": "idiomoptima.core.smoke",
+  "version": "0.1.0",
+  "description": "Stratified smoke corpus for the GrammarDB deterministic layer. Gold reflects human-correct English. Splits: clean (restraint), mechanical (should fix), guard (must not touch), parser (must not auto-apply without an analyser).",
+  "cases": [
+    {
+      "id": "clean-001",
+      "split": "clean",
+      "input": "The quick brown fox jumps over the lazy dog.",
+      "expectedOutput": "The quick brown fox jumps over the lazy dog.",
+      "goldEdits": [],
+      "tags": ["pangram"]
+    },
+    {
+      "id": "clean-002",
+      "split": "clean",
+      "input": "Our team meets on Mondays.",
+      "expectedOutput": "Our team meets on Mondays.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-003",
+      "split": "clean",
+      "input": "She said, \"I will be there at noon.\"",
+      "expectedOutput": "She said, \"I will be there at noon.\"",
+      "goldEdits": [],
+      "tags": ["quote"]
+    },
+    {
+      "id": "clean-004",
+      "split": "clean",
+      "input": "The report was well-written and concise.",
+      "expectedOutput": "The report was well-written and concise.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-005",
+      "split": "clean",
+      "input": "He doesn't know the answer.",
+      "expectedOutput": "He doesn't know the answer.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-006",
+      "split": "clean",
+      "input": "This is an apple.",
+      "expectedOutput": "This is an apple.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-007",
+      "split": "clean",
+      "input": "An hour has passed.",
+      "expectedOutput": "An hour has passed.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-008",
+      "split": "clean",
+      "input": "A university was founded in 1890.",
+      "expectedOutput": "A university was founded in 1890.",
+      "goldEdits": []
+    },
+    {
+      "id": "clean-009",
+      "split": "clean",
+      "input": "Use `const x = 1;` to declare a constant.",
+      "expectedOutput": "Use `const x = 1;` to declare a constant.",
+      "goldEdits": [],
+      "tags": ["inline-code"]
+    },
+    {
+      "id": "clean-010",
+      "split": "clean",
+      "input": "Visit https://example.com for details.",
+      "expectedOutput": "Visit https://example.com for details.",
+      "goldEdits": [],
+      "tags": ["url"]
+    },
+    {
+      "id": "mech-001",
+      "split": "mechanical",
+      "input": "Hello  world.",
+      "expectedOutput": "Hello world.",
+      "goldEdits": [
+        { "ruleId": "PUN-SPACE-002", "original": "  ", "replacement": " ", "category": "PUN" }
+      ],
+      "tags": ["double-space"]
+    },
+    {
+      "id": "mech-002",
+      "split": "mechanical",
+      "input": "Hello , world .",
+      "expectedOutput": "Hello, world.",
+      "goldEdits": [
+        { "ruleId": "PUN-SPACE-001", "original": " ,", "replacement": ",", "category": "PUN" },
+        { "ruleId": "PUN-SPACE-001", "original": " .", "replacement": ".", "category": "PUN" }
+      ],
+      "tags": ["space-before-punct"]
+    },
+    {
+      "id": "mech-003",
+      "split": "mechanical",
+      "input": "Alot of people came.",
+      "expectedOutput": "A lot of people came.",
+      "goldEdits": [
+        { "ruleId": "SPELL-A-LOT-001", "original": "Alot", "replacement": "A lot", "category": "SPELL" }
+      ]
+    },
+    {
+      "id": "mech-004",
+      "split": "mechanical",
+      "input": "The the cat sat on the mat.",
+      "expectedOutput": "The cat sat on the mat.",
+      "goldEdits": [
+        { "ruleId": "SPELL-DUP-001", "original": "The the", "replacement": "The", "category": "SPELL" }
+      ],
+      "tags": ["duplicated-word"]
+    },
+    {
+      "id": "mech-005",
+      "split": "mechanical",
+      "input": "wait for me .",
+      "expectedOutput": "wait for me.",
+      "goldEdits": [
+        { "ruleId": "PUN-SPACE-001", "original": " .", "replacement": ".", "category": "PUN" }
+      ]
+    },
+    {
+      "id": "mech-006",
+      "split": "mechanical",
+      "input": "I recieve mail every day.",
+      "expectedOutput": "I receive mail every day.",
+      "goldEdits": [
+        { "original": "recieve", "replacement": "receive", "category": "SPELL", "note": "ie/ei spelling" }
+      ],
+      "note": "Spelling coverage probe: not yet expected to pass."
+    },
+    {
+      "id": "mech-007",
+      "split": "mechanical",
+      "input": "Its a good day.",
+      "expectedOutput": "It's a good day.",
+      "goldEdits": [
+        { "original": "Its", "replacement": "It's", "category": "SPELL", "note": "possessive vs contraction" }
+      ],
+      "note": "Ambiguous without context (Its vs It's'); conservative engines should suggest, not auto-apply."
+    },
+    {
+      "id": "mech-008",
+      "split": "mechanical",
+      "input": "This is a apple.",
+      "expectedOutput": "This is an apple.",
+      "goldEdits": [
+        { "original": "a apple", "replacement": "an apple", "category": "ART", "note": "article before vowel sound" }
+      ],
+      "note": "Article selection requires a sound model; probe for the ART gap."
+    },
+    {
+      "id": "guard-001",
+      "split": "guard",
+      "input": "Use `const x  = 1;` to declare a constant.",
+      "expectedOutput": "Use `const x  = 1;` to declare a constant.",
+      "goldEdits": [],
+      "forbiddenSubstrings": ["const x = 1;"],
+      "tags": ["inline-code"]
+    },
+    {
+      "id": "guard-002",
+      "split": "guard",
+      "input": "Email me at a.b@example.com please.",
+      "expectedOutput": "Email me at a.b@example.com please.",
+      "goldEdits": [],
+      "tags": ["email"]
+    },
+    {
+      "id": "guard-003",
+      "split": "guard",
+      "input": "He said \"This is  a test.\"",
+      "expectedOutput": "He said \"This is  a test.\"",
+      "goldEdits": [],
+      "forbiddenSubstrings": ["This is a test"],
+      "tags": ["quote-immutability"],
+      "note": "EX-QUOTE-001: quoted language must not be silently rewritten."
+    },
+    {
+      "id": "guard-004",
+      "split": "guard",
+      "input": "See the citation [12] for details.",
+      "expectedOutput": "See the citation [12] for details.",
+      "goldEdits": [],
+      "tags": ["citation"]
+    },
+    {
+      "id": "guard-005",
+      "split": "guard",
+      "input": "The identity is E = mc^2 exactly.",
+      "expectedOutput": "The identity is E = mc^2 exactly.",
+      "goldEdits": [],
+      "tags": ["equation"]
+    },
+    {
+      "id": "guard-006",
+      "split": "guard",
+      "input": "Press Ctrl+C to copy the selection.",
+      "expectedOutput": "Press Ctrl+C to copy the selection.",
+      "goldEdits": [],
+      "tags": ["keyboard"]
+    },
+    {
+      "id": "parser-001",
+      "split": "parser",
+      "input": "The dogs is barking loudly.",
+      "expectedOutput": "The dogs is barking loudly.",
+      "goldEdits": [],
+      "tags": ["subject-verb-agreement"],
+      "note": "Wrong English, but must NOT be auto-applied without a real number analyser."
+    },
+    {
+      "id": "parser-002",
+      "split": "parser",
+      "input": "The information are accurate.",
+      "expectedOutput": "The information are accurate.",
+      "goldEdits": [],
+      "tags": ["mass-noun-agreement"],
+      "note": "Requires noun-count lexicon; must not auto-apply."
+    },
+    {
+      "id": "parser-003",
+      "split": "parser",
+      "input": "She go to school every day.",
+      "expectedOutput": "She go to school every day.",
+      "goldEdits": [],
+      "tags": ["third-person-s"],
+      "note": "Requires subject person/number; must not auto-apply."
+    },
+    {
+      "id": "parser-004",
+      "split": "parser",
+      "input": "He is more taller than me.",
+      "expectedOutput": "He is more taller than me.",
+      "goldEdits": [],
+      "tags": ["double-comparative"],
+      "note": "Requires morphology; must not auto-apply."
+    },
+    {
+      "id": "parser-005",
+      "split": "parser",
+      "input": "I am agree with you.",
+      "expectedOutput": "I am agree with you.",
+      "goldEdits": [],
+      "tags": ["copula"],
+      "note": "Requires lexical frame; must not auto-apply."
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+﻿function applyGrammarLayer(text) {
+  if (!text) return { text: text || "", fixes: 0, grammar: 0, punctuation: 0, duplication: 0 };
+  var fixes = 0;
+  var grammarFixes = 0;
+  var punctFixes = 0;
+  var dupFixes = 0;
+  var out = replaceOutsideQuotes(String(text), function (seg) {
+    var s = seg;
+    for (var i = 0; i < GRAMMAR_RULES.length; i++) {
+      var rule = GRAMMAR_RULES[i];
+      // Compiled ONCE at module load, not per segment. This runs per sentence,
+      // so rebuilding every rule's RegExp on each call was the single largest
+      // avoidable cost in the deterministic layer (the CPU hot spot implicated
+      // in the platform terminating the worker mid-stream). lastIndex is reset
+      // at loop entry because these are /g regexes and would otherwise carry
+      // scan position between sentences.
+      var re = GRAMMAR_RULES_COMPILED[i];
+      re.lastIndex = 0;
+      var res;
+      while ((res = re.exec(s)) !== null) {
+        if (rule.guard && rule.guard(s, res.index)) { re.lastIndex = res.index + res[0].length; continue; }
+        var rep = rule.repl(res);
+        // Preserve sentence-initial capitalization: "An university" -> "a
+        // university" must render as "A university ..." when the match opened
+        // the sentence with a capital (surfaced by the capitalization axis as a
+        // real finalVersion defect the certified layer itself introduced).
+        if (/^[A-Z]/.test(res[0]) && /^[a-z]/.test(rep)) {
+          rep = rep.charAt(0).toUpperCase() + rep.slice(1);
+        }
+        s = s.substring(0, res.index) + rep + s.substring(res.index + res[0].length);
+        re.lastIndex = res.index + rep.length;
+        fixes++;
+        grammarFixes++;
+      }
+    }
+    for (var j = 0; j < GRAMMAR_PREPOSITIONS.length; j++) {
+      var pp = GRAMMAR_PREPOSITIONS[j];
+      var pr = GRAMMAR_PREPOSITIONS_COMPILED[j];
+      pr.lastIndex = 0;
+      while ((res = pr.exec(s)) !== null) {
+        var good = String(typeof pp.good === "function" ? pp.good(res) : pp.good);
+        if (/^[A-Z]/.test(res[0]) && !/^[A-Z]/.test(good)) good = good.charAt(0).toUpperCase() + good.slice(1);
+        s = s.substring(0, res.index) + good + s.substring(res.index + res[0].length);
+        pr.lastIndex = res.index + good.length;
+        fixes++;
+        grammarFixes++;
+      }
+    }
+    // TIER-A verb+preposition collocations: two back-to-back replaces cannot
+    // starve each other ("discuss about it" only fires once per occurrence).
+    for (var vp = 0; vp < VERB_PREP_CORRECTIONS.length; vp++) {
+      var vpRule = VERB_PREP_CORRECTIONS[vp];
+      var vpRe = VERB_PREP_COMPILED[vp];
+      vpRe.lastIndex = 0;
+      while ((res = vpRe.exec(s)) !== null) {
+        var vpGood = String(typeof vpRule.good === "function" ? vpRule.good(res) : vpRule.good);
+        s = s.substring(0, res.index) + vpGood + s.substring(res.index + res[0].length);
+        vpRe.lastIndex = res.index + vpGood.length;
+        fixes++;
+        grammarFixes++;
+      }
+    }
+    // --- Certified punctuation & spacing (quote-safe via the segment split) ---
+    // 1) Spacing: no space before , . ; : ! ? ; a missing space after , ; :
+    //    when glued to a letter or an opening quote; collapse 2+ spaces; no
+    //    space just inside parentheses. Numeric separators ("2,600") are never
+    //    touched (a comma between digits is skipped below).
+    s = s.replace(/[ \t]+([,.;:!?])/g, function (m, p) { punctFixes++; return p; });
+    s = s.replace(/([,;:])(?=[A-Za-z"\u201C\u2018])/g, function (m, p) { punctFixes++; return p + " "; });
+    s = s.replace(/ {2,}/g, " ");
+    s = s.replace(/[ \t]+([)\]])/g, function (m, p) { punctFixes++; return p; });
+    s = s.replace(/\( [ \t]+/g, "(");
+    // 1b) Doubled closed-class word ("the the", "of of", "and and") â€” collapse
+    //     to the FIRST word. Runs AFTER spacing so "the  the" (double space)
+    //     is normalised first and then caught here.
+    //
+    //     Why the pattern is shaped the way it is (each guard is load-bearing):
+    //       - DUP_FUNCTION_WORDS is a closed-class list, because a blanket
+    //         "any word twice" rule would destroy "very very" (emphasis) and
+    //         "had had" (the perfect). Deliberately absent: had, that, very,
+    //         and adverbs generally.
+    //       - \b ... \b is required: without it the tail of a word reads as a
+    //         duplicate â€” "th"+"is" | "is" becomes "is is", "tea"+"m" | "met"
+    //         becomes "m m".
+    //       - the gap is HORIZONTAL WHITESPACE ONLY, so a comma cannot sit in
+    //         it. That is what protects deliberate repetition, including the
+    //         owner's example "this is very, very good", plus "yes, yes",
+    //         "no, no" and quoted '"no, no"'. The same gap also blocks a
+    //         sentence or line boundary ("...drawn from the.\n\nThe study").
+    //     Quote-safe for free: this runs inside the replaceOutsideQuotes
+    //     segment, and applyCertifiedPolish (the only caller) skips footnote
+    //     and [N] / Ibid. lines.
+    //     Counted as `duplication`, NOT `grammar`, so the defect is charged
+    //     exactly once by the class that owns it.
+    s = s.replace(doubledWordRe(), function (m, w) {
+      dupFixes++;
+      fixes++;
+      return w;
+    });
+    // 2) Series (Oxford) comma in a 3+ item list: "A, B and C" -> "A, B, and C",
+    //    auto-inserted regardless of dialect, but ONLY when the list is clearly a
+    //    list: a list-introducer word sits just before it, or at least one item
+    //    is capitalized. This keeps "review, discuss and approve" (a verb chain,
+    //    both forms acceptable) untouched while fixing genuine noun lists like
+    //    "not just philological, stylistic and structural".
+    var introSignal = /\b(not\s+just|not\s+only|both|among|such\s+as|including|namely|e\.g\.|for\s+example|in\s+particular|the\s+following|between|whether|like)\s+[A-Za-z'\u2019]*$/i;
+    var oxfordRe = /\b([A-Za-z\u00C0-\u024F][\w'\u2019\u00C0-\u024F-]{0,40}),\s+([a-zA-Z\u00C0-\u024F][\w'\u2019\u00C0-\u024F-]{0,40}(?:\s+[a-zA-Z\u00C0-\u024F][\w'\u2019\u00C0-\u024F-]{0,40}){0,1})\s+and\s+([a-zA-Z\u00C0-\u024F][\w'\u2019\u00C0-\u024F-]{0,40}(?:\s+[a-zA-Z\u00C0-\u024F][\w'\u2019\u00C0-\u024F-]{0,40}){0,1})\b/gi;
+    s = s.replace(oxfordRe, function (ox, item1, item2, item3, oxOff, whole) {
+      // Never touch an already-correct list (item2 already carries a comma).
+      if (/,\s*$/.test(item2) || /,\s*$/.test(item1)) return ox;
+      // Refuse when the "and" is really a clause connector ("... , B and C that").
+      var after = whole.slice(oxOff + ox.length);
+      if (/^(and|or|but|which|who|that|when|where|if|in|on|as|to|by|with|from|of|than)\b/i.test(after)) return ox;
+      // Refuse verb chains (all items lowercase single verbs like review/discuss).
+      var verbish = /^(is|are|was|were|has|have|had|be|been|do|does|did|show|shows|shown|showed|examine|examines|examined|review|reviews|reviewed|discuss|discusses|discussed|analyze|analyzes|analyzed|analyse|analyses|analysed|test|tests|tested|study|studies|studied|develop|develops|developed|evaluate|evaluates|evaluated|assess|assesses|assessed|support|supports|supported|promote|promotes|promoted)$/i;
+      var itemsAllLow = !/[A-Z]/.test(item1) && !/[A-Z]/.test(item2) && !/[A-Z]/.test(item3);
+      if (itemsAllLow && verbish.test(item1.split(/\s+/)[0]) && verbish.test(item2.split(/\s+/)[0]) && verbish.test(item3.split(/\s+/)[0])) return ox;
+      // List-introducer word immediately before item1 (ONE char of item1 is
+      // included so the signal's following word is visible), OR a proper-noun
+      // list where EVERY item is capitalized ("London, Paris and Rome").
+      // Clause chains ("The eagle soared, the bear slept and the fox hunted")
+      // satisfy neither signature; item1 is a SINGLE word so an introducer like
+      // "just" / "both" can never be swallowed into it, and items 2-3 are capped
+      // at two words each so a comma ending an earlier clause ("..., but also
+      // its functional and dialectal") stops matching.
+      var sigPref = whole.slice(Math.max(0, oxOff - 48), oxOff + 1);
+      var sig = introSignal.test(sigPref) ||
+        (/[A-Z]/.test(item1) && /[A-Z]/.test(item2) && /[A-Z]/.test(item3));
+      if (!sig) return ox;
+      punctFixes++;
+      return item1 + ", " + item2 + ", and " + item3;
+    });
+    // 3) Citation comma: "Name Year" -> "Name, Year" inside a parenthetical group
+    //    that already carries at least two name+year elements. A lone "(1976)" or
+    //    book-title year without list context is never touched.
+    s = s.replace(/\(([^()]{1,400})\)/g, function (cm, inner) {
+      var nameYear = /^[A-Za-z][^|\n]*?\b(1[89]\d{2}|20\d{2})\b/;
+      // Split the parenthetical group on SEMICOLONS only â€” each element is one
+      // citation ("Altoma, 1969"). Splitting on commas would chop each element
+      // into "Name" + "year" and the â‰¥2-name+year gate could never fire.
+      var listEls = inner.split(/\s*;\s*/);
+      var yearCount = 0;
+      listEls.forEach(function (el) {
+        if (nameYear.test(el)) yearCount++;
+      });
+      if (yearCount < 2) return cm;
+      var newInner = inner.replace(/\b([A-Z][\w.'\u2019&]*(\s+(?:and|&)\s+[A-Z][\w.'\u2019]*)?)\s+(1[89]\d{2}|20\d{2})\b/g, function (mm, name, two, year) {
+        punctFixes++;
+        return name + ", " + year;
+      });
+      return "(" + newInner + ")";
+    });
+    // 4) Coordinated bare verb after a past-tense clause head (S-V tense
+    //    agreement, grammar category): "saw a transition ... and manifest in"
+    //    -> "... and manifested in".
+    s = s.replace(CERTIFIED_COORD_RE, function (cm, andWord, bareVerb, tail, off, whole) {
+      var pre = s.slice(Math.max(0, off - 260), off + 4);
+      // Require a past-tense clause head earlier in the same clause window and
+      // no second "and" between the head and this coordinate (a fresh subject
+      // starts a parallel clause where the bare form may be legitimate).
+      var tailPre = pre.replace(/\b(and)\s+(?:[A-Za-z\u2019']+\s+){1,9}?/gi, " ");
+      if (!CERTIFIED_PAST_HEADS_RE.test(tailPre)) return cm;
+      var ed = /e$/.test(bareVerb) ? bareVerb + "d" : bareVerb + "ed";
+      grammarFixes++;
+      return andWord + " " + ed;
+    });
+    // 5) Unbalanced parentheses / square brackets (COUNT-ONLY, never fixed â€” a
+    //    deterministic editor cannot know the author's intent; the defect still
+    //    docks the punctuation class on BOTH sides when it persists).
+    punctFixes += countUnbalancedBrackets(s);
+    return s;
+  });
+  return {
+    text: out, fixes: fixes, grammar: grammarFixes,
+    punctuation: punctFixes, duplication: dupFixes
+  };
+}
+
+// Certified per-sentence polish: the deterministic editor wrapper, skipped for
+// footnote/citation lines (their punctuation and wording are the author's).
+function applyCertifiedPolish(text, isFootnote) {
+  if (!text) return text;
+  if (isFootnote) return text;
+  if (/^\s*\[\d+\]/.test(text) || /^\s*Ibid\.?/i.test(text)) return text;
+  return applyGrammarLayer(text).text;
+}
+
+// --- Nativization is DATABASE-DRIVEN ONLY (two-pass contract) -----------------
+// Pass 2 applies the three client DB families (ai-ese -> idioms -> domain
+// lexical) as pure regex replacements; there are NO code-side nativization
+// rules beyond the DB layer (no builtin word-swap maps, no slot-template
+// families). A single-token entry needs an explicit SINGLE_WORD_ALLOW slot.
+// applyDatabaseNativization below is the ONLY lexical pass.
+
+// Deterministic enforcement layer: applies the exact DB replacements to each
+// sentence (recap-safe via replaceOutsideQuotes, footnote/citation-safe) and
+// reports honest statistics for the suggestions and score. This is the ONLY
+// lexical pass â€” no built-in word-swap rules or template families exist.
+function applyDatabaseNativization(sentences, dbs, domain, opts) {
+  var stats = { totalMatches: 0, sentencesChanged: 0, aiPhrases: 0, idioms: 0, lexical: 0 };
+  var maps = dbs && typeof dbs === "object" ? buildNativizationMaps(dbs, domain) : buildNativizationMaps({}, domain);
+  var collectSuggest = !(opts && opts.collectSuggest === false);
+  // Advise-only tier matchers (never edit; recorded for register notes).
+  var suggestRx = [];
+  for (var sgi = 0; sgi < maps.suggestList.length; sgi++) {
+    var sp = maps.suggestList[sgi];
+    suggestRx.push({ src: sp.src, tgt: sp.tgt, kind: sp.kind, rx: new RegExp("\\b" + escapeRegExp(sp.src) + "\\b", "i") });
+  }
+  var suggestNotes = [];
+  var suggestSeen = {};
+  if (!sentences || !sentences.length) return { sentences: sentences || [], stats: stats, suggestNotes: suggestNotes };
+
+  function bump(matchKind) {
+    stats.totalMatches++;
+    if (matchKind === "ai") stats.aiPhrases++;
+    else if (matchKind === "idioms") stats.idioms++;
+    else if (matchKind === "lexical") stats.lexical++;
+  }
+
+  sentences.forEach(function (s) {
+    if (!s || !s.revised) return;
+    var orig = (s.original || "").trim();
+    // Skip only ACTUAL footnote/citation lines, not body prose that merely
+    // begins with an inline reference marker ("[1] This approach is better
+    // suited for analysing..." must still be nativized). A line counts as a
+    // citation only when it STARTS with a [N] marker (or is already flagged
+    // isImmutableFootnote) and, with that marker stripped, is author-year
+    // shaped, an "Ibid.", or carries a URL/DOI. Body prose that merely
+    // contains book years like "The Woman Warrior (1976)" is NOT a citation.
+    var hasMarker = /^\[\d+\]/.test(orig);
+    var stripped = orig.replace(/^\s*\[\d+\]\s*/, "");
+    var isCitation = hasMarker && stripped.length > 0 && (
+      /^\s*Ibid\.?(\s|$)/i.test(stripped) ||
+      /^[A-Z][^?!\n]*\(\d{4}\)/.test(stripped) ||
+      /https?:\/\//i.test(stripped) ||
+      /\bDOI\b/i.test(stripped)
+    );
+    if (s.isImmutableFootnote || isCitation || /^".*"$/.test(s.revised.trim())) return;
+
+    var baseline = s.revised;
+    var changedHere = false;
+
+    // 1) Whole-sentence mappings (lexical/idiom full-sentence entries).
+    var sentKey = normalizeSentenceKey(orig);
+    var sentEntry = maps.sentenceMap[sentKey];
+    if (sentEntry && sentKey.length >= 8 && /[A-Za-z]/.test(sentKey)) {
+      s.revised = sentEntry.tgt;
+      bump(sentEntry.cat);
+      changedHere = true;
+    }
+
+    // 2) Phrase-level, word-boundary exact, quote-safe replacements.
+    if (!/^".*"$/.test(s.revised.trim())) {
+      var phraseRx = [];
+      for (var i = 0; i < maps.phraseList.length; i++) {
+        var p = maps.phraseList[i];
+        phraseRx.push({ src: escapeRegExp(p.src), tgt: p.tgt, cat: p.cat, len: p.src.length });
+      }
+      s.revised = replaceOutsideQuotes(s.revised, function (seg) {
+        var out = seg;
+        for (var j = 0; j < phraseRx.length; j++) {
+          var item = phraseRx[j];
+          var re = new RegExp("\\b" + item.src + "\\b", "gi");
+          var res;
+          while ((res = re.exec(out)) !== null) {
+            // Correlative safety: skip the swap when this phrase's partner (e.g.
+            // "in general" vs "in particular") is present in the same sentence.
+            if (isCollocationLocked(out, item.src)) { re.lastIndex = res.index + res[0].length; continue; }
+            var prefix = out.slice(0, res.index);
+            var atStart = prefix.trim() === "" || /[.!?]["'\u201D\u2019]?\s+$/.test(prefix) || /\n\s*$/.test(prefix) || /\]\s+$/.test(prefix);
+            var cap = res[0].charAt(0) === res[0].charAt(0).toUpperCase() && res[0].charAt(0) !== res[0].charAt(0).toLowerCase();
+            var tgt = cap && atStart ? item.tgt.charAt(0).toUpperCase() + item.tgt.slice(1) : item.tgt;
+            out = out.substring(0, res.index) + tgt + out.substring(res.index + res[0].length);
+            re.lastIndex = res.index + tgt.length;
+            bump(item.cat);
+            changedHere = true;
+          }
+        }
+        return out;
+      });
+    }

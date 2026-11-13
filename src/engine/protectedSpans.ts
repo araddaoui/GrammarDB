@@ -25,7 +25,7 @@ const PROTECTED_PATTERNS = [
   { kind: 'equation', regex: /\$\$[\s\S]*?\$\$|\$[^$\n]+\$/g },
 ];
 
-export function findProtectedSpans(text: string, skipQuotes = false): ProtectedSpan[] {
+export function findProtectedSpans(text: string, protectQuotes = true): ProtectedSpan[] {
   const spans: ProtectedSpan[] = [];
 
   for (const { kind, regex } of PROTECTED_PATTERNS) {
@@ -41,7 +41,7 @@ export function findProtectedSpans(text: string, skipQuotes = false): ProtectedS
     }
   }
 
-  if (skipQuotes) {
+  if (protectQuotes) {
     // Both ASCII quotes and curly typographical quotation marks.
     // Single-quote spans must open at a non-word boundary and close at a non-word boundary
     // so intra-word apostrophes (e.g. "committee's", "didn't") never pair across sentences.

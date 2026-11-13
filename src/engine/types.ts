@@ -64,11 +64,26 @@ export type RuleReplacement =
 
 export type RuleTier = 'tier1-local' | 'tier2-syntax' | 'tier3-discourse';
 
+/**
+ * Lifecycle status of a rule. This is the primary gate for migration:
+ * only `stable` rules are eligible to be exported to a consumer (e.g. IdiomOptima).
+ * - experimental: depends on an analyser/lexicon that may not exist in the consumer
+ * - candidate: mechanically safe but not yet regression-proven
+ * - stable: deterministic, regression-backed, safe to auto-apply
+ * - deprecated: kept for provenance, never exported, never applied
+ */
+export type RuleStatus = 'experimental' | 'candidate' | 'stable' | 'deprecated';
+
+/** How risky a wrong application of this rule is to meaning. */
+export type RuleRiskLevel = 'low' | 'medium' | 'high';
+
 export interface Rule {
   id: string;
   category: string;
   tier?: RuleTier;
   severity?: 'minor' | 'medium' | 'high';
+  status?: RuleStatus;
+  riskLevel?: RuleRiskLevel;
   priority: number;
   description: string;
   match: RuleMatch;
@@ -81,6 +96,7 @@ export interface Rule {
   guards: string[];
   provenance?: string;
   rationale?: string;
+  notes?: string;
   examples?: {
     positive: Array<{ input: string; expected: string; note?: string }>;
     negative: Array<{ input: string; expected: string; note?: string }>;
@@ -136,6 +152,9 @@ export interface DiscourseEscalationCandidate {
 
 export interface GrammarRulesSchema {
   schemaVersion: string;
+  packId?: string;
+  packVersion?: string;
+  generatedFrom?: string;
   language: string;
   purpose: string;
   defaults: {
@@ -168,8 +187,19 @@ export interface EngineConfig {
   mode: EngineMode;
   dialect?: 'US' | 'UK' | 'neutral';
   enableL1Support?: boolean;
+  /**
+   * Protect double-quoted spans from silent rewriting. Defaults to true
+   * (restraint-first: quoted language is treated as protected content).
+   * Set explicitly to false to allow corrections inside quotes.
+   */
+  protectQuotes?: boolean;
+  /** @deprecated Use `protectQuotes`. Retained for backward compatibility. */
   skipDirectQuotes?: boolean;
   maxPasses?: number;
+  /** Minimum confidence for auto-application. Defaults to the engine default (0.95). */
+  minAutoApplyConfidence?: number;
+  /** Kill-switch: when false the engine returns the input unchanged. */
+  enabled?: boolean;
 }
 
 export interface StylisticAdvisory {
