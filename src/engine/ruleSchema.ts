@@ -61,11 +61,14 @@ export const KNOWN_CATEGORIES: ReadonlyArray<string> = [
   'L1-FR',
   'STYLE',
   'PROTECT',
-  // Extended authoring categories present in rules.ts / conditionals.ts
+  // Extended authoring categories present in rules.ts / conditionals.ts / styleAndCollocations.ts
   'ADV',
   'MODAL',
   'COND',
   'SYN',
+  'USAGE',
+  'COLLOC',
+  'CONCISE',
 ];
 
 export interface SchemaDiagnostics {

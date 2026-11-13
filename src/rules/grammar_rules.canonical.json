@@ -5764,7 +5764,7 @@
       },
       "replacement": "After [Inferred Agent] [V_past] ...",
       "confidence": 0.975,
-      "autoApply": true,
+      "autoApply": false,
       "enabled": true,
       "requires": [
         "clause_analyzer",
@@ -5920,7 +5920,7 @@
       },
       "replacement": "For [Object] to be [V3]",
       "confidence": 0.975,
-      "autoApply": true,
+      "autoApply": false,
       "enabled": true,
       "requires": [
         "clause_analyzer",
