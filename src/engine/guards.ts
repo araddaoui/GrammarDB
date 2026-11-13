@@ -174,6 +174,22 @@ export function shouldGuardCandidate(
     }
   }
 
+  // Epistemic evidential guard for SUBJ-MAND-BE-001 ("The results suggest that the delay was random")
+  if (rule.id === 'SUBJ-MAND-BE-001') {
+    const preClause = fullText.slice(Math.max(0, cand.start - 55), cand.start + 15);
+    if (
+      /\b(?:results?|data|findings?|evidence|study|studies|analysis|analyses|report|reports|research|experiment|experiments|survey|observations?|model|models|statistics|numbers?|trends?|patterns?|correlation|outcomes?|figures?|charts?|tables?|graphs?)\s+(?:also\s+|strongly\s+|clearly\s+)?suggest(?:s|ed)?\s+that\b/i.test(
+        preClause
+      )
+    ) {
+      return {
+        guarded: true,
+        guardId: 'EX-SEMANTIC-001',
+        reason: 'Epistemic/evidential "suggest" takes indicative complement rather than mandative subjunctive.',
+      };
+    }
+  }
+
   // EX-DIALECT-001: Dialect variant preservation
   if (config.dialect && config.dialect !== 'neutral') {
     // Preserve configured variety

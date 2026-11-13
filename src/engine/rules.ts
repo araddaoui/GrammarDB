@@ -1,4 +1,7 @@
 import { Rule, GrammarRulesSchema } from './types';
+import { DANGLING_MODIFIER_RULES } from './danglingModifiers';
+import { SYNTAX_HARMONY_RULES } from './syntaxHarmonies';
+import { STYLE_COLLOCATION_RULES } from './styleAndCollocations';
 
 export const COMPREHENSIVE_RULES: Rule[] = [
   // ==========================================
@@ -3176,6 +3179,9 @@ export const COMPREHENSIVE_RULES: Rule[] = [
     provenance: 'Formal syntax tense harmony and sequence of tenses.',
     enabled: true,
   },
+  ...DANGLING_MODIFIER_RULES,
+  ...SYNTAX_HARMONY_RULES,
+  ...STYLE_COLLOCATION_RULES,
 ];
 
 export const OFFICIAL_GRAMMAR_RULES: GrammarRulesSchema = {

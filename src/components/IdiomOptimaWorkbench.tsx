@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Cpu,
   Play,
@@ -27,16 +27,20 @@ import {
   Zap,
   Clock,
   Search,
+  Plus,
 } from 'lucide-react';
 import { IdiomOptimaEngine } from '../engine/engine';
-import { EngineConfig, EngineMode, EngineResult, TestSuiteResult } from '../engine/types';
+import { EngineConfig, EngineMode, EngineResult, Rule, TestSuiteResult } from '../engine/types';
 import { runEngineTestSuite, TEST_SUITE_CASES } from '../engine/testRunner';
-import { SEED_RULES } from '../engine/rules';
 import { OFFICIAL_GRAMMAR_EXCEPTIONS } from '../engine/guards';
 
 interface DiffToken {
   type: 'same' | 'added' | 'removed';
   value: string;
+}
+
+function normalizeEngineInput(raw: string): string {
+  return raw.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\u00A0/g, ' ');
 }
 
 function computeWordDiff(text1: string, text2: string): DiffToken[] {
@@ -45,21 +49,49 @@ function computeWordDiff(text1: string, text2: string): DiffToken[] {
   const tokens1 = text1.split(/(\s+|[.,!?;:()[\]"'])/).filter(Boolean);
   const tokens2 = text2.split(/(\s+|[.,!?;:()[\]"'])/).filter(Boolean);
 
-  const m = tokens1.length;
-  const n = tokens2.length;
+  // Trim common prefix and suffix tokens so long multi-paragraph texts still get exact word diffs
+  let prefixLen = 0;
+  while (
+    prefixLen < tokens1.length &&
+    prefixLen < tokens2.length &&
+    tokens1[prefixLen] === tokens2[prefixLen]
+  ) {
+    prefixLen++;
+  }
 
-  if (m * n > 40000) {
-    return [
-      { type: 'removed', value: text1 },
-      { type: 'added', value: text2 },
-    ];
+  let suffixLen = 0;
+  while (
+    suffixLen < tokens1.length - prefixLen &&
+    suffixLen < tokens2.length - prefixLen &&
+    tokens1[tokens1.length - 1 - suffixLen] === tokens2[tokens2.length - 1 - suffixLen]
+  ) {
+    suffixLen++;
+  }
+
+  const mid1 = tokens1.slice(prefixLen, tokens1.length - suffixLen);
+  const mid2 = tokens2.slice(prefixLen, tokens2.length - suffixLen);
+  const m = mid1.length;
+  const n = mid2.length;
+
+  const prefixTokens: DiffToken[] =
+    prefixLen > 0 ? [{ type: 'same', value: tokens1.slice(0, prefixLen).join('') }] : [];
+  const suffixTokens: DiffToken[] =
+    suffixLen > 0
+      ? [{ type: 'same', value: tokens1.slice(tokens1.length - suffixLen).join('') }]
+      : [];
+
+  if (m * n > 90000) {
+    const midDiff: DiffToken[] = [];
+    if (mid1.length > 0) midDiff.push({ type: 'removed', value: mid1.join('') });
+    if (mid2.length > 0) midDiff.push({ type: 'added', value: mid2.join('') });
+    return [...prefixTokens, ...midDiff, ...suffixTokens];
   }
 
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
 
   for (let i = 0; i < m; i++) {
     for (let j = 0; j < n; j++) {
-      if (tokens1[i] === tokens2[j]) {
+      if (mid1[i] === mid2[j]) {
         dp[i + 1][j + 1] = dp[i][j] + 1;
       } else {
         dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
@@ -67,22 +99,22 @@ function computeWordDiff(text1: string, text2: string): DiffToken[] {
     }
   }
 
-  const diff: DiffToken[] = [];
+  const midDiff: DiffToken[] = [];
   let i = m, j = n;
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && tokens1[i - 1] === tokens2[j - 1]) {
-      diff.unshift({ type: 'same', value: tokens1[i - 1] });
+    if (i > 0 && j > 0 && mid1[i - 1] === mid2[j - 1]) {
+      midDiff.unshift({ type: 'same', value: mid1[i - 1] });
       i--;
       j--;
     } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      diff.unshift({ type: 'added', value: tokens2[j - 1] });
+      midDiff.unshift({ type: 'added', value: mid2[j - 1] });
       j--;
     } else if (i > 0 && (j === 0 || dp[i][j - 1] < dp[i - 1][j])) {
-      diff.unshift({ type: 'removed', value: tokens1[i - 1] });
+      midDiff.unshift({ type: 'removed', value: mid1[i - 1] });
       i--;
     }
   }
-  return diff;
+  return [...prefixTokens, ...midDiff, ...suffixTokens];
 }
 
 export const IdiomOptimaWorkbench: React.FC = () => {
@@ -109,11 +141,46 @@ export const IdiomOptimaWorkbench: React.FC = () => {
   const [subTab, setSubTab] = useState<'workbench' | 'discourse' | 'suite' | 'rules' | 'exceptions'>('workbench');
   const [suiteResult, setSuiteResult] = useState<TestSuiteResult | null>(null);
   const [aiModalPayload, setAiModalPayload] = useState<any | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [ruleSearch, setRuleSearch] = useState('');
   const [selectedRuleCategory, setSelectedRuleCategory] = useState<string>('ALL');
 
+  const [customRules, setCustomRules] = useState<Rule[]>(() => {
+    try {
+      const saved = localStorage.getItem('idiomoptima_custom_rules');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [newRulePattern, setNewRulePattern] = useState('');
+  const [newRuleReplacement, setNewRuleReplacement] = useState('');
+  const [newRuleCategory, setNewRuleCategory] = useState('SYN');
+  const [newRuleDescription, setNewRuleDescription] = useState('');
+  const [showAddRuleForm, setShowAddRuleForm] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('idiomoptima_custom_rules', JSON.stringify(customRules));
+    } catch {
+      // ignore storage errors
+    }
+  }, [customRules]);
+
+  const engine = useMemo(() => {
+    const inst = new IdiomOptimaEngine();
+    if (customRules.length > 0) {
+      inst.registerRules(customRules);
+    }
+    return inst;
+  }, [customRules]);
+
+  const activeRules = useMemo(() => engine.getRules(), [engine]);
+
   const filteredRules = useMemo(() => {
-    return SEED_RULES.filter((r) => {
+    return activeRules.filter((r) => {
       const matchesCat =
         selectedRuleCategory === 'ALL' || r.category === selectedRuleCategory;
       const matchesSearch =
@@ -123,9 +190,7 @@ export const IdiomOptimaWorkbench: React.FC = () => {
         r.category.toLowerCase().includes(ruleSearch.toLowerCase());
       return matchesCat && matchesSearch;
     });
-  }, [selectedRuleCategory, ruleSearch]);
-
-  const engine = useMemo(() => new IdiomOptimaEngine(), []);
+  }, [activeRules, selectedRuleCategory, ruleSearch]);
 
   const config: EngineConfig = useMemo(
     () => ({
@@ -153,14 +218,30 @@ export const IdiomOptimaWorkbench: React.FC = () => {
 
   const [actionNotification, setActionNotification] = useState<string | null>(null);
 
-  const handleTransform = (overrideText?: string) => {
-    const textToProcess = overrideText !== undefined ? overrideText : inputText;
+  const handleTransform = (overrideText?: string, forceApply: boolean = true) => {
+    const domRawText =
+      overrideText !== undefined
+        ? overrideText
+        : textareaRef.current
+        ? textareaRef.current.value
+        : inputText;
+    const textToProcess = normalizeEngineInput(domRawText);
+
     setIsTransforming(true);
     setTransformPulse(true);
     setInputText(textToProcess);
     setActiveInputText(textToProcess);
 
-    const evalRes = engine.process(textToProcess, config);
+    const effectiveConfig: EngineConfig =
+      forceApply && config.mode !== 'autoApply'
+        ? { ...config, mode: 'autoApply' }
+        : config;
+
+    if (forceApply && engineMode !== 'autoApply') {
+      setEngineMode('autoApply');
+    }
+
+    const evalRes = engine.process(textToProcess, effectiveConfig);
     setResult(evalRes);
     setLastTransformedAt(new Date().toLocaleTimeString());
     setHasPendingChanges(false);
@@ -168,6 +249,8 @@ export const IdiomOptimaWorkbench: React.FC = () => {
 
     const notice = evalRes.hasChanged
       ? `✓ Transform Success: Applied ${evalRes.appliedCandidates.length} grammar rule(s) in ${evalRes.processingTimeMs}ms.`
+      : evalRes.suggestedCandidates.length > 0
+      ? `💡 Evaluated (${effectiveConfig.mode}): ${evalRes.suggestedCandidates.length} suggestion(s) detected.`
       : evalRes.stylisticAdvisories && evalRes.stylisticAdvisories.length > 0
       ? `⚡ Evaluated: 0 grammar errors. Flagged ${evalRes.stylisticAdvisories.length} stylistic advisory (dangling participle).`
       : `✓ Evaluated in ${evalRes.processingTimeMs}ms: Text is clean under active rules (0 modifications needed).`;
@@ -208,18 +291,49 @@ export const IdiomOptimaWorkbench: React.FC = () => {
         handleTransform(text);
       }
     } catch {
-      const manualText = window.prompt('Paste your English sentence or paragraph here to transform:');
-      if (manualText) {
-        setInputText(manualText);
-        setActiveInputText(manualText);
-        setHasPendingChanges(false);
-        setJustPasted(false);
-        handleTransform(manualText);
-      } else {
-        setActionNotification('Clipboard access restricted in browser preview. Please use Ctrl+V directly in Box 1.');
-        setTimeout(() => setActionNotification(null), 4500);
-      }
+      textareaRef.current?.focus();
+      setActionNotification('Browser clipboard read is restricted in this preview. Box 1 is focused — press Ctrl+V (or Cmd+V) to paste and auto-transform.');
+      setTimeout(() => setActionNotification(null), 5000);
     }
+  };
+
+  const handleAddCustomRule = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRulePattern.trim() || !newRuleReplacement.trim()) return;
+    const escapedPattern = newRulePattern.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const ruleId = `CUSTOM-${newRuleCategory}-${Date.now().toString().slice(-4)}`;
+    const newRule: Rule = {
+      id: ruleId,
+      category: newRuleCategory,
+      tier: 'tier1-local',
+      priority: 97,
+      description:
+        newRuleDescription.trim() ||
+        `Custom deterministic rule: replace "${newRulePattern.trim()}" with "${newRuleReplacement.trim()}".`,
+      match: {
+        type: 'regex',
+        pattern: `\\b${escapedPattern}\\b`,
+        caseInsensitive: true,
+      },
+      replacement: newRuleReplacement.trim(),
+      confidence: 0.99,
+      autoApply: true,
+      enabled: true,
+      requires: ['local_regex'],
+      guards: ['ignore_protected_spans'],
+      examples: {
+        positive: [{ input: newRulePattern.trim(), expected: newRuleReplacement.trim() }],
+        negative: [{ input: newRuleReplacement.trim(), expected: newRuleReplacement.trim() }],
+      },
+      provenance: 'User-created deterministic rule (persisted locally).',
+    };
+    setCustomRules((prev) => [newRule, ...prev]);
+    setNewRulePattern('');
+    setNewRuleReplacement('');
+    setNewRuleDescription('');
+    setShowAddRuleForm(false);
+    setActionNotification(`✓ Added persistent rule ${ruleId} to active engine database.`);
+    setTimeout(() => setActionNotification(null), 4500);
   };
 
   const handleRunSuite = () => {
@@ -531,6 +645,7 @@ export const IdiomOptimaWorkbench: React.FC = () => {
                     onClick={() => {
                       setInputText('');
                       setActiveInputText('');
+                      setResult(engine.process('', config));
                       setHasPendingChanges(false);
                       setJustPasted(false);
                     }}
@@ -546,9 +661,10 @@ export const IdiomOptimaWorkbench: React.FC = () => {
               {/* Text Area */}
               <div className="flex-1 flex flex-col space-y-2">
                 <textarea
+                  ref={textareaRef}
                   value={inputText}
                   onChange={(e) => {
-                    const val = e.target.value;
+                    const val = normalizeEngineInput(e.target.value);
                     setInputText(val);
                     if (autoTransform) {
                       setActiveInputText(val);
@@ -561,22 +677,24 @@ export const IdiomOptimaWorkbench: React.FC = () => {
                   }}
                   onPaste={(e) => {
                     const pastedText = e.clipboardData?.getData('text');
-                    if (pastedText) {
+                    if (pastedText !== undefined && pastedText !== null) {
                       e.preventDefault();
                       const target = e.target as HTMLTextAreaElement;
                       const start = target.selectionStart ?? 0;
                       const end = target.selectionEnd ?? 0;
-                      const currentVal = inputText;
-                      const newVal = currentVal.slice(0, start) + pastedText + currentVal.slice(end);
+                      const currentVal = target.value ?? inputText;
+                      const newVal = normalizeEngineInput(
+                        currentVal.slice(0, start) + pastedText + currentVal.slice(end)
+                      );
                       setInputText(newVal);
                       setActiveInputText(newVal);
-                      handleTransform(newVal);
+                      handleTransform(newVal, true);
                     }
                   }}
                   onKeyDown={(e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                       e.preventDefault();
-                      handleTransform();
+                      handleTransform(undefined, true);
                     }
                   }}
                   rows={9}
@@ -641,7 +759,7 @@ export const IdiomOptimaWorkbench: React.FC = () => {
                       <span>
                         {hasPendingChanges || justPasted || inputText !== activeInputText
                           ? 'New text detected — Click Transform'
-                          : `Synced at ${lastTransformedAt}`}
+                          : `${activeRules.length} rules · Synced ${lastTransformedAt}`}
                       </span>
                     </div>
                   </div>
@@ -788,7 +906,28 @@ export const IdiomOptimaWorkbench: React.FC = () => {
 
                 {/* Status Diagnostic Banner */}
                 {!result.hasChanged ? (
-                  result.stylisticAdvisories && result.stylisticAdvisories.length > 0 ? (
+                  result.suggestedCandidates && result.suggestedCandidates.length > 0 ? (
+                    <div className={`p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-indigo-950 transition-all ${transformPulse ? 'ring-2 ring-indigo-400' : ''}`}>
+                      <div className="space-y-0.5">
+                        <span className="font-bold flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4 text-indigo-600 shrink-0" />
+                          <span>
+                            {result.suggestedCandidates.length} Candidate Correction(s) Pending ({engineMode} mode)
+                          </span>
+                        </span>
+                        <p className="text-[11px] text-indigo-800">
+                          Output currently mirrors Input because {engineMode} mode does not rewrite text automatically.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleTransform(undefined, true)}
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs shrink-0 flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+                        <span>Apply All Corrections</span>
+                      </button>
+                    </div>
+                  ) : result.stylisticAdvisories && result.stylisticAdvisories.length > 0 ? (
                     <div className={`p-3 bg-amber-50 border border-amber-200/90 rounded-xl space-y-2 text-xs transition-all ${transformPulse ? 'ring-2 ring-amber-400' : ''}`}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-bold text-amber-900 flex items-center gap-1.5">
@@ -836,7 +975,7 @@ export const IdiomOptimaWorkbench: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-slate-600 text-[11px] leading-relaxed">
-                        All 45 deterministic grammar, agreement, and mechanic rules evaluated this text across 3 validation passes. Zero mechanical errors detected under conservative policy.
+                        All {activeRules.length} deterministic grammar, agreement, conditional, and dangling-modifier rules evaluated this text across 3 validation passes. Zero mechanical errors detected under conservative policy.
                       </p>
                       <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60 text-[11px]">
                         <span className="text-slate-500 font-medium">Quick-load test samples:</span>
@@ -1662,25 +1801,88 @@ export const IdiomOptimaWorkbench: React.FC = () => {
       {subTab === 'rules' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">
-                  Seed Grammar Rules Registry (grammar_rules.json)
+                  Grammar Rules Registry (grammar_rules.json)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Showing all active mechanical rules alongside explicitly disabled parser-dependent rule families.
+                  Showing all active deterministic rules (including conditional harmonization &amp; dangling-modifier resolution) plus custom user rules.
                 </p>
               </div>
-              <span className="font-mono text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg font-bold">
-                Showing {filteredRules.length} of {SEED_RULES.length} rules
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAddRuleForm((v) => !v)}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{showAddRuleForm ? 'Close Rule Builder' : 'Create Custom Rule'}</span>
+                </button>
+                <span className="font-mono text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg font-bold">
+                  Showing {filteredRules.length} of {activeRules.length} rules
+                </span>
+              </div>
             </div>
+
+            {showAddRuleForm && (
+              <form
+                onSubmit={handleAddCustomRule}
+                className="p-4 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-3 text-xs"
+              >
+                <div className="font-bold text-indigo-950">Add Persistent Deterministic Rule</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={newRulePattern}
+                    onChange={(e) => setNewRulePattern(e.target.value)}
+                    placeholder="Erroneous phrase (e.g. could of)"
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={newRuleReplacement}
+                    onChange={(e) => setNewRuleReplacement(e.target.value)}
+                    placeholder="Corrected replacement (e.g. could have)"
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <select
+                    value={newRuleCategory}
+                    onChange={(e) => setNewRuleCategory(e.target.value)}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                  >
+                    <option value="SYN">SYN (Syntax)</option>
+                    <option value="AGR">AGR (Agreement)</option>
+                    <option value="COND">COND (Conditionals)</option>
+                    <option value="MODAL">MODAL</option>
+                    <option value="PREP">PREP</option>
+                    <option value="ADV">ADV</option>
+                  </select>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={newRuleDescription}
+                    onChange={(e) => setNewRuleDescription(e.target.value)}
+                    placeholder="Optional linguistic rationale / description..."
+                    className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors"
+                  >
+                    Save &amp; Activate Rule
+                  </button>
+                </div>
+              </form>
+            )}
 
             {/* Filter and Search Bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
               {/* Category Pills */}
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                {['ALL', 'AGR', 'MODAL', 'COND', 'SYN', 'ADV', 'PREP', 'ART', 'STYLE'].map((cat) => (
+                {['ALL', 'AGR', 'MODAL', 'COND', 'TNS', 'SYN', 'PRON', 'ADV', 'PREP', 'USAGE', 'COLLOC', 'CONCISE', 'PUN', 'ART', 'STYLE'].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedRuleCategory(cat)}

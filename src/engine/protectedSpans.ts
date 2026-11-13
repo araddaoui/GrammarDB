@@ -42,8 +42,11 @@ export function findProtectedSpans(text: string, skipQuotes = false): ProtectedS
   }
 
   if (skipQuotes) {
-    // Both ASCII quotes and curly typographical quotation marks
-    const quoteRegex = /"([^"\\]*(\\.[^"\\]*)*)"|“([^”\\]*(\\.[^”\\]*)*)”|'([^'\\]*(\\.[^'\\]*)*)'|‘([^’\\]*(\\.[^’\\]*)*)’/g;
+    // Both ASCII quotes and curly typographical quotation marks.
+    // Single-quote spans must open at a non-word boundary and close at a non-word boundary
+    // so intra-word apostrophes (e.g. "committee's", "didn't") never pair across sentences.
+    const quoteRegex =
+      /"([^"\\]*(\\.[^"\\]*)*)"|“([^”\\]*(\\.[^”\\]*)*)”|(?<![A-Za-z0-9])'([^'\\]*(?:\\.[^'\\]*)*)'(?![A-Za-z0-9])|(?<![A-Za-z0-9])‘([^’\\]*(?:\\.[^’\\]*)*)’(?![A-Za-z0-9])/g;
     let qMatch: RegExpExecArray | null;
     while ((qMatch = quoteRegex.exec(text)) !== null) {
       spans.push({

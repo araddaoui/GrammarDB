@@ -12,6 +12,9 @@ import { shouldGuardCandidate, OFFICIAL_GRAMMAR_EXCEPTIONS } from './guards';
 import { validateRulesSchema, validateExceptionsSchema } from './schemaValidator';
 import { analyzeClausesAndDiscourse, extractDependencyCandidates } from './clauseAnalyzer';
 import { analyzeConditionals, CONDITIONAL_RULES } from './conditionals';
+import { analyzeDanglingModifiers, DANGLING_MODIFIER_RULES } from './danglingModifiers';
+import { analyzeSyntaxHarmonies, SYNTAX_HARMONY_RULES } from './syntaxHarmonies';
+import { analyzeStyleAndCollocations, STYLE_COLLOCATION_RULES } from './styleAndCollocations';
 
 export class IdiomOptimaEngine {
   private rules: Rule[];
@@ -45,6 +48,29 @@ export class IdiomOptimaEngine {
         if (!this.rules.some((r) => r.id === cr.id)) {
           this.rules.push(cr);
         }
+      }
+      for (const dr of DANGLING_MODIFIER_RULES) {
+        if (!this.rules.some((r) => r.id === dr.id)) {
+          this.rules.push(dr);
+        }
+      }
+      for (const sr of SYNTAX_HARMONY_RULES) {
+        if (!this.rules.some((r) => r.id === sr.id)) {
+          this.rules.push(sr);
+        }
+      }
+      for (const scr of STYLE_COLLOCATION_RULES) {
+        if (!this.rules.some((r) => r.id === scr.id)) {
+          this.rules.push(scr);
+        }
+      }
+    }
+  }
+
+  public registerRules(extraRules: Rule[]): void {
+    for (const er of extraRules) {
+      if (!this.rules.some((r) => r.id === er.id)) {
+        this.rules.push(er);
       }
     }
   }
@@ -244,6 +270,78 @@ export class IdiomOptimaEngine {
       // 3c. Systematic Multi-Clause Conditional Harmonization Candidates
       const condCandidates = analyzeConditionals(currentText);
       for (const cand of condCandidates) {
+        const rule = this.rules.find((r) => r.id === cand.ruleId);
+        if (!rule || !rule.enabled) continue;
+
+        const guardCheck = shouldGuardCandidate(
+          cand,
+          rule,
+          currentText,
+          protectedSpans,
+          config
+        );
+
+        if (guardCheck.guarded) {
+          cand.status = 'suppressed_by_guard';
+          suppressedCandidates.push(cand);
+          allCandidates.push(cand);
+          continue;
+        }
+
+        passCandidates.push(cand);
+      }
+
+      // 3d. Systematic Dangling Modifier & Agency Inference Candidates
+      const danglingCandidates = analyzeDanglingModifiers(currentText);
+      for (const cand of danglingCandidates) {
+        const rule = this.rules.find((r) => r.id === cand.ruleId);
+        if (!rule || !rule.enabled) continue;
+
+        const guardCheck = shouldGuardCandidate(
+          cand,
+          rule,
+          currentText,
+          protectedSpans,
+          config
+        );
+
+        if (guardCheck.guarded) {
+          cand.status = 'suppressed_by_guard';
+          suppressedCandidates.push(cand);
+          allCandidates.push(cand);
+          continue;
+        }
+
+        passCandidates.push(cand);
+      }
+
+      // 3e. Systematic Coordinated Tense, Mandative Subjunctive, Reported Speech & Relative Pronoun Candidates
+      const syntaxCandidates = analyzeSyntaxHarmonies(currentText);
+      for (const cand of syntaxCandidates) {
+        const rule = this.rules.find((r) => r.id === cand.ruleId);
+        if (!rule || !rule.enabled) continue;
+
+        const guardCheck = shouldGuardCandidate(
+          cand,
+          rule,
+          currentText,
+          protectedSpans,
+          config
+        );
+
+        if (guardCheck.guarded) {
+          cand.status = 'suppressed_by_guard';
+          suppressedCandidates.push(cand);
+          allCandidates.push(cand);
+          continue;
+        }
+
+        passCandidates.push(cand);
+      }
+
+      // 3f. Systematic Transitive Prepositions, Usage, Collocations, Passive Simplification, Conciseness & Serial Punctuation
+      const styleCollocCandidates = analyzeStyleAndCollocations(currentText);
+      for (const cand of styleCollocCandidates) {
         const rule = this.rules.find((r) => r.id === cand.ruleId);
         if (!rule || !rule.enabled) continue;
 

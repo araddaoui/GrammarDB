@@ -402,41 +402,171 @@ export function detectDanglingModifiers(fullText: string): StylisticAdvisory[] {
   return advisories;
 }
 
+const SINGULAR_HEAD_NOUNS = new Set([
+  'list', 'summary', 'analysis', 'study', 'report', 'review', 'collection',
+  'overview', 'subset', 'evaluation', 'assessment', 'investigation',
+  'finding', 'conclusion', 'result', 'decision', 'recommendation', 'proposal',
+  'policy', 'system', 'method', 'process', 'plan', 'program', 'programme',
+  'project', 'draft', 'document', 'version', 'schedule', 'petition',
+  'announcement', 'merger', 'deadline', 'pack', 'batch', 'sequence',
+  'structure', 'strategy', 'catalog', 'catalogue', 'inventory', 'directory',
+  'index', 'table', 'chart', 'graph', 'diagram', 'model', 'framework',
+  'mechanism', 'criterion', 'protocol', 'manual', 'guideline', 'agreement',
+  'contract', 'statute', 'clause', 'article', 'record', 'number',
+]);
+
+const PLURAL_HEAD_NOUNS = new Set([
+  'decisions', 'recommendations', 'results', 'findings', 'policies', 'changes',
+  'measures', 'proposals', 'reports', 'studies', 'clauses', 'articles',
+  'documents', 'guidelines', 'efforts', 'plans', 'methods', 'issues',
+  'factors', 'arguments', 'claims', 'metrics', 'effects', 'conclusions',
+  'outcomes', 'observations', 'comments', 'suggestions', 'requirements',
+  'limitations', 'reviews', 'analyses', 'evaluations', 'assessments',
+  'investigations', 'summaries', 'lists', 'petitions', 'contracts',
+  'agreements', 'rules', 'regulations', 'standards', 'procedures', 'protocols',
+  'strategies', 'initiatives', 'projects', 'programs', 'programmes', 'systems',
+  'models', 'processes', 'steps', 'actions', 'policies', 'budgets', 'costs',
+  'expenses', 'revenues', 'profits', 'salaries', 'wages', 'benefits',
+  'employees', 'workers', 'interns', 'managers', 'directors', 'members',
+  'participants', 'researchers', 'scientists', 'authors', 'editors', 'students',
+  'patients', 'clients', 'customers', 'users', 'applicants', 'candidates',
+  'updates', 'revisions', 'edits', 'corrections', 'improvements', 'delays',
+  'errors', 'mistakes', 'problems', 'challenges', 'concerns', 'questions',
+  'answers', 'replies', 'responses', 'statements', 'announcements', 'notices',
+  'terms', 'conditions', 'provisions', 'sections', 'chapters', 'pages',
+  'figures', 'tables', 'charts', 'graphs', 'datasets', 'samples', 'specimens',
+  'records', 'logs', 'files', 'details', 'facts', 'reasons', 'causes',
+  'options', 'alternatives', 'solutions', 'tools', 'resources', 'assets',
+  'lights', 'doors', 'windows', 'rooms', 'sensors', 'devices', 'machines',
+]);
+
+const INTERVENING_FINITE_VERBS =
+  /\b(?:is|are|was|were|am|be|been|has|have|had|do|does|did|will|would|can|could|may|might|shall|should|must|made|took|gave|said|told|asked|announced|reported|rejected|accepted|approved|signed|wrote|read|saw|heard|found)\b/i;
+
+function matchVerbCase(original: string, targetLower: string): string {
+  if (/^[A-Z]/.test(original)) {
+    return targetLower.charAt(0).toUpperCase() + targetLower.slice(1);
+  }
+  return targetLower;
+}
+
 export function extractDependencyCandidates(text: string): CorrectionCandidate[] {
   const candidates: CorrectionCandidate[] = [];
+  const usedOffsets = new Set<number>();
 
-  // 1. Long-Distance Head-Verb Agreement across PP and optional non-restrictive RC:
+  // 1A. Long-Distance Singular Head-Verb Agreement across PP(s) and optional non-restrictive RC:
+  // e.g., "The list of recommendations, which include three new clauses, were rejected by the committee."
   // e.g., "The summary of all the submitted research articles, which was reviewed by two senior editors, have been rejected"
-  const headPPAuxRegex =
-    /\b((?:The|A|An|This|That)\s+(summary|analysis|study|report|review|collection|overview|subset|evaluation|assessment|investigation|majority|finding|conclusion|result))\s+of\s+([^,;\n]+?)(?:,\s*which\s+[^,\n]+,)?\s+\b(have)\s+(been\s+\w+|\w+ed|\w+en)\b/gi;
+  // Guard: Exclude "A number of", "A variety of", "The majority of", "A majority of" (notional plural)
+  const singularHeadPattern = Array.from(SINGULAR_HEAD_NOUNS).join('|');
+  const headSingRegex = new RegExp(
+    `(?:^|(?<=[.!?\\n]\\s*|;\\s*|:\\s*))((?:The|A|An|This|That|One|Each|Every|My|Your|His|Her|Its|Our|Their|(?:The\\s+)?[A-Za-z]+['’]s)(?:\\s+(?:new|old|main|primary|final|initial|recent|full|entire|long|short|official|formal|proposed|revised|current|updated|detailed|preliminary|complete|overall)){0,2}\\s+(${singularHeadPattern}))((?:\\s+(?:of|for|in|on|at|to|from|with|by|about|regarding|concerning|involving|covering|including|between|among|across|against|under|over|during|after|before)\\s+[^,;.!?\\n]+?)+)(\\s*,\\s*(?:which|who|whom|whose)\\s+[^.\\n]+?,)?\\s+(?:(often|always|never|rarely|initially|eventually|finally|unanimously|subsequently|recently|immediately|unexpectedly|completely|entirely|repeatedly|just|already|still)\\s+)?\\b(were|are|have)\\b(?=\\s+[A-Za-z-])`,
+    'gi'
+  );
 
   let m: RegExpExecArray | null;
-  while ((m = headPPAuxRegex.exec(text)) !== null) {
-    const fullMatch = m[0];
-    const fullStart = m.index;
-    const haveIndexInFull = fullMatch.lastIndexOf('have');
-    if (haveIndexInFull !== -1) {
-      const verbStart = fullStart + haveIndexInFull;
-      const verbEnd = verbStart + 4; // 'have'.length
+  while ((m = headSingRegex.exec(text)) !== null) {
+    const subjPhrase = m[1];
+    const headNoun = m[2].toLowerCase();
+    const ppChunk = m[3];
+    const auxWord = m[6];
+    const auxLower = auxWord.toLowerCase();
 
-      candidates.push({
-        ruleId: 'AGR-HEAD-001',
-        start: verbStart,
-        end: verbEnd,
-        original: 'have',
-        replacement: 'has',
-        confidence: 0.985,
-        category: 'AGR',
-        rationale: `Singular head noun '${m[2]}' requires singular auxiliary 'has' across intervening prepositional phrase and relative clause.`,
-        provenance: 'IdiomOptima Syntactic Dependency Parser',
-      });
+    // Guard against notional plural constructions ("a number of", "the majority of", etc.)
+    if (headNoun === 'number' && !/^(?:the|this|that)\s+number$/i.test(subjPhrase.trim())) {
+      continue;
     }
+    // Guard against compound subject ("The list of A and the summary of B")
+    if (/\band\s+(?:the|a|an|my|our|their|his|her|its|these|those|several|many|both)\b/i.test(ppChunk)) {
+      continue;
+    }
+
+    const auxOffsetInMatch = m[0].lastIndexOf(auxWord);
+    if (auxOffsetInMatch === -1) continue;
+    const verbStart = m.index + auxOffsetInMatch;
+    const verbEnd = verbStart + auxWord.length;
+
+    if (auxLower === 'have') {
+      const afterAux = text.slice(verbEnd).trimStart();
+      if (!/^(?:been|had|not|no|never|already|just|still|only|also|[a-z]+ed|[a-z]+en|a|an|the|several|many|little|much)\b/i.test(afterAux)) {
+        continue;
+      }
+    }
+
+    const targetLower = auxLower === 'were' ? 'was' : auxLower === 'are' ? 'is' : 'has';
+    const replacement = matchVerbCase(auxWord, targetLower);
+
+    usedOffsets.add(verbStart);
+    candidates.push({
+      ruleId: 'AGR-HEAD-001',
+      start: verbStart,
+      end: verbEnd,
+      original: auxWord,
+      replacement,
+      confidence: 0.985,
+      category: 'AGR',
+      rationale: `Singular head noun '${m[2]}' requires singular verb '${targetLower}' across intervening prepositional phrases and relative clauses.`,
+      provenance: 'IdiomOptima Syntactic Dependency Parser',
+    });
+  }
+
+  // 1B. Long-Distance Plural Head-Verb Agreement (including possessive determiners like "The committee's decisions regarding the budget was communicated late"):
+  const pluralHeadPattern = Array.from(PLURAL_HEAD_NOUNS).join('|');
+  const headPlurRegex = new RegExp(
+    `(?:^|(?<=[.!?\\n]\\s*|;\\s*|:\\s*))((?:(?:The|These|Those|All|Both|Many|Several|Few|Multiple|Numerous|Various|Our|Their|Your|My|His|Her|Its|Some)|(?:The\\s+[A-Za-z-]+['’]s)|(?:[A-Z][a-z-]+['’]s))(?:\\s+(?:new|old|recent|final|initial|key|major|minor|proposed|revised|current|updated|official|formal|early|late|unexpected|primary|secondary|internal|external|annual|quarterly|financial|strategic|critical|important|pending|remaining|approved|rejected|submitted|committee's|board's)){0,2}\\s+(${pluralHeadPattern}))((?:\\s+(?:regarding|concerning|about|of|for|in|on|at|to|from|with|by|involving|covering|including|between|among|across|against|under|over|during|after|before|without|towards?|into)\\s+[^,;.!?\\n]+?)+)(\\s*,\\s*(?:which|who|whom|whose)\\s+[^.\\n]+?,)?\\s+(?:(often|always|never|rarely|initially|eventually|finally|unanimously|subsequently|recently|immediately|unexpectedly|completely|entirely|reportedly|apparently|widely|clearly|just|already|still)\\s+)?\\b(was|is|has)\\b(?=\\s+[A-Za-z-])`,
+    'gi'
+  );
+
+  while ((m = headPlurRegex.exec(text)) !== null) {
+    const subjPhrase = m[1];
+    const headNoun = m[2];
+    const ppChunk = m[3];
+    const auxWord = m[6];
+    const auxLower = auxWord.toLowerCase();
+
+    // Guard against distributive singular pronouns/determiners
+    if (/^(?:each|every|neither|either|one|none)\b/i.test(subjPhrase.trim())) {
+      continue;
+    }
+    // Guard against a finite verb hidden inside the intervening PP (indicating a zero-relativizer clause)
+    if (INTERVENING_FINITE_VERBS.test(ppChunk)) {
+      continue;
+    }
+
+    const auxOffsetInMatch = m[0].lastIndexOf(auxWord);
+    if (auxOffsetInMatch === -1) continue;
+    const verbStart = m.index + auxOffsetInMatch;
+    if (usedOffsets.has(verbStart)) continue;
+
+    const verbEnd = verbStart + auxWord.length;
+    if (auxLower === 'has') {
+      const afterAux = text.slice(verbEnd).trimStart();
+      if (!/^(?:been|had|not|no|never|already|just|still|only|also|[a-z]+ed|[a-z]+en|a|an|the|several|many|little|much)\b/i.test(afterAux)) {
+        continue;
+      }
+    }
+
+    const targetLower = auxLower === 'was' ? 'were' : auxLower === 'is' ? 'are' : 'have';
+    const replacement = matchVerbCase(auxWord, targetLower);
+
+    usedOffsets.add(verbStart);
+    candidates.push({
+      ruleId: 'AGR-HEAD-PLURAL-001',
+      start: verbStart,
+      end: verbEnd,
+      original: auxWord,
+      replacement,
+      confidence: 0.985,
+      category: 'AGR',
+      rationale: `Plural head noun '${headNoun}' requires plural verb '${targetLower}' across intervening prepositional modifiers.`,
+      provenance: 'IdiomOptima Syntactic Dependency Parser',
+    });
   }
 
   // 2. Embedded Relative Clause Long-Distance Subject-Verb Agreement:
-  // e.g., "participants who speaks more than one languages suffers from less cognitive decline"
+  // e.g., "participants who speak more than one language suffers from less cognitive decline"
   const embedRelRegex =
-    /\b(participants|researchers|authors|students|patients|subjects|adults|individuals|scholars|scientists)\s+who\s+([^,;\n]+?)\s+\b(suffers|shows|demonstrates|exhibits|lives|works|experiences)\b/gi;
+    /\b(participants|researchers|authors|students|patients|subjects|adults|individuals|scholars|scientists|employees|workers|interns|managers|members|colleagues|citizens|users)\s+who\s+([^,;\n]+?)\s+\b(suffers|shows|demonstrates|exhibits|lives|works|experiences|receives|requires|reports|needs|remains|appears|continues)\b/gi;
 
   while ((m = embedRelRegex.exec(text)) !== null) {
     const fullMatch = m[0];
@@ -445,6 +575,7 @@ export function extractDependencyCandidates(text: string): CorrectionCandidate[]
     const verbIndexInFull = fullMatch.lastIndexOf(verb);
     if (verbIndexInFull !== -1) {
       const verbStart = fullStart + verbIndexInFull;
+      if (usedOffsets.has(verbStart)) continue;
       const verbEnd = verbStart + verb.length;
       const baseVerb = verb.endsWith('s') ? verb.slice(0, -1) : verb;
 
